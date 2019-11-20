@@ -75,8 +75,8 @@ def train_parser(parser):
 
 
 class SearchConfig(BaseConfig):
-
-    def build_parser(self):
+    @staticmethod
+    def build_parser():
         parser = get_parser("Search config")
         train_parser(parser)
         network_parser(parser)
@@ -84,7 +84,7 @@ class SearchConfig(BaseConfig):
         return parser
 
     def __init__(self):
-        parser = self.build_parser()
+        parser = SearchConfig.build_parser()
         args = parser.parse_args()
         super().__init__(**vars(args))
         time_str = time.asctime(time.localtime()).replace(' ', '_')

@@ -47,6 +47,7 @@ class ImageNetPolicy(object):
             SubPolicy(0.6, "invert", 4, 1.0, "equalize", 8, fillcolor),
             SubPolicy(0.6, "color", 4, 1.0, "contrast", 8, fillcolor)
         ]
+
     def __call__(self, img):
         policy_idx = random.randint(0, len(self.policies) - 1)
         return self.policies[policy_idx](img)
