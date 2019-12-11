@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from distribution.Category_dist import Categorical
+from search_algorithm.Category_dist import Categorical
 from utils import utils
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-from distribution.Category_dist import Categorical
+from search_algorithm.Category_dist import Categorical
 import copy
 from scipy.special import softmax
 import random
