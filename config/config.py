@@ -78,6 +78,10 @@ class SearchConfig(BaseConfig):
     @staticmethod
     def build_parser():
         parser = get_parser("Search config")
+        parser.add_argument('--name', default='DDPNAS', required=False,
+                            help='MDENAS / DDPNAS / SNG/ ASNG/ others will be comming soon')
+        parser.add_argument('--sub_name', default='', required=False)
+        
         train_parser(parser)
         network_parser(parser)
         dataset_parser(parser)

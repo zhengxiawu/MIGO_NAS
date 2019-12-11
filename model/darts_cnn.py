@@ -1,7 +1,7 @@
-from models.darts_cell import *
+from model.darts_cell import *
 import utils.genotypes as gt
 import numpy as np
-from models.base_module import MyModule
+from model.base_module import MyModule
 
 
 # search cnn

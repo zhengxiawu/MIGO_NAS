@@ -1,7 +1,7 @@
 """ CNN cell for architecture search """
 import torch
 import torch.nn as nn
-from models import darts_ops as ops
+from model import darts_ops as ops
 import torch.nn.functional as F
 import numpy as np
 from utils import utils

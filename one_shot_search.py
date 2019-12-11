@@ -138,7 +138,7 @@ def main():
 
     logger.info("Final best Prec@1 = {:.4%}".format(best_top1))
     logger.info("Best Genotype = {}".format(best_genotype))
-
+    np.save(os.path.join(config.path, 'probability.npy'), distribution_optimizer.p_model.theta)
 
 def train(train_loader, valid_loader, model, w_optim, lr, epoch, sample):
     top1 = utils.AverageMeter()
