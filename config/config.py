@@ -72,6 +72,7 @@ def train_parser(parser):
     parser.add_argument('--warm_up_epochs', type=int, default=0, help='# of training epochs')
     # random seed
     parser.add_argument('--seed', type=int, default=2, help='random seed')
+    parser.add_argument('--deterministic', type=bool, default=True, help='cudnn switch')
 
 
 class SearchConfig(BaseConfig):

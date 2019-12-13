@@ -38,9 +38,12 @@ def main():
     torch.manual_seed(config.seed)
     torch.cuda.manual_seed_all(config.seed)
     # torch.backends.cudnn.benchmark = True
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.enabled = True
+    if config.deterministic:
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.enabled = True
+    else:
+        torch.backends.cudnn.benchmark = True
 
     # get data with meta info
     input_size, input_channels, n_classes, train_data = get_data.get_data(
