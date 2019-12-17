@@ -80,7 +80,7 @@ class SearchConfig(BaseConfig):
     def build_parser():
         parser = get_parser("Search config")
         parser.add_argument('--name', default='DDPNAS', required=False,
-                            help='MDENAS / DDPNAS / SNG/ ASNG/ others will be comming soon')
+                            help='MDENAS / DDPNAS / SNG/ ASNG/ dynamic_ASNG/ others will be comming soon')
         parser.add_argument('--sub_name', default='', required=False)
         
         train_parser(parser)

@@ -7,8 +7,8 @@ from utils import utils
 import copy
 
 
-# ASNG + DDPNAS
-class Dynamic_ASNG:
+# SNG + DDPNAS
+class Dynamic_SNG:
     """
     Stochastic Natural Gradient for Categorical Distribution
     """
@@ -126,8 +126,6 @@ class Dynamic_ASNG:
             self.sample_index[i] = list(set(range(self.p_model.Cmax)) - set(self.pruned_index[i]))
 
     def update_function(self, c_one, fxc, range_restriction=True):
-        self.delta = self.delta_init / self.Delta
-        beta = self.delta / (self.N ** 0.5)
 
         aru, idx = self.utility(fxc)
         if np.all(aru == 0):
@@ -135,6 +133,7 @@ class Dynamic_ASNG:
             # nothing happens for theta and breaks.
             # In this case, we skip the rest of the code.
             return
+
         ng = np.mean(aru[:, np.newaxis, np.newaxis] * (c_one[idx] - self.p_model.theta), axis=0)
 
         sl = []
@@ -146,14 +145,9 @@ class Dynamic_ASNG:
             sl += list(s_i)
         sl = np.array(sl)
 
-        pnorm = np.sqrt(np.dot(sl, sl)) + 1e-9
+        pnorm = np.sqrt(np.dot(sl, sl)) + 1e-8
         self.eps = self.delta / pnorm
         self.p_model.theta += self.eps * ng
-
-        self.s = (1 - beta) * self.s + np.sqrt(beta * (2 - beta)) * sl / pnorm
-        self.gamma = (1 - beta) ** 2 * self.gamma + beta * (2 - beta)
-        self.Delta *= np.exp(beta * (self.gamma - np.dot(self.s, self.s) / self.alpha))
-        self.Delta = min(self.Delta, self.Delta_max)
 
         for i in range(self.p_model.d):
             ci = self.p_model.C[i]
