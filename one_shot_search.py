@@ -8,7 +8,8 @@ from config.config import SearchConfig
 import utils.utils as utils
 from model.darts_cnn import SelectSearchCNN
 from datasets import get_data
-from search_algorithm import Category_MDENAS, Category_DDPNAS, Category_SNG, Category_ASNG, Category_Dynamic_ASNG
+from search_algorithm import Category_MDENAS, Category_DDPNAS, Category_SNG, Category_ASNG, \
+    Category_Dynamic_ASNG, Category_Dynamic_SNG
 from utils import genotypes
 import random
 import pdb
@@ -94,6 +95,10 @@ def main():
             [num_ops]*total_edges)
     elif config.name == 'dynamic_ASNG':
         distribution_optimizer = Category_Dynamic_ASNG.Dynamic_ASNG(categories=[num_ops]*total_edges,
+                                                                    step=3,
+                                                                    pruning=True)
+    elif config.name == 'dynamic_SNG':
+        distribution_optimizer = Category_Dynamic_SNG.Dynamic_SNG(categories=[num_ops]*total_edges,
                                                                     step=3,
                                                                     pruning=True)
     else:
