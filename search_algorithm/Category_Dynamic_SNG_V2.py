@@ -12,10 +12,11 @@ class Dynamic_SNG:
     """
     Stochastic Natural Gradient for Categorical Distribution
     """
-    def __init__(self, categories,
-                 delta_init=1., lam=6, step=3, pruning=True,
-                 Delta_max=np.inf, init_theta=None, max_mize=True, sample_with_prob=False):
-
+    def __init__(self, categories, delta_init=1., step=3,
+                 pruning=True, sample_with_prob=False, max_mize=True,
+                 utility_function='picewise', utility_function_hyper=0.5):
+        self.utility_function = utility_function
+        self.utility_function_hyper = utility_function_hyper
         self.N = np.sum(np.array(categories) - 1)
         # Categorical distribution
         self.p_model = Categorical(categories)
@@ -23,12 +24,7 @@ class Dynamic_SNG:
         self.p_model.C = np.array(self.p_model.C)
         self.valid_d = len(self.p_model.C[self.p_model.C > 1])
 
-        if init_theta is not None:
-            self.p_model.theta = init_theta
-
         self.delta_init = delta_init
-        self.lam = lam  # lambda_theta
-        self.Delta_max = Delta_max  # maximum Delta (can be np.inf)
 
         self.Delta = 1.
         self.gamma = 0.0  # correction factor
@@ -57,9 +53,6 @@ class Dynamic_SNG:
             self.sample_index.append(list(range(self.p_model.Cmax)))
             self.pruned_index.append([])
 
-    def get_lam(self):
-        return self.lam
-
     def get_delta(self):
         return self.delta
 
@@ -76,8 +69,7 @@ class Dynamic_SNG:
         for i in range(self.p_model.d):
             # get the prob
             if self.sample_with_prob:
-                prob = copy.deepcopy(self.p_model.theta[i, self.sample_index[i]])
-                prob = prob / prob.sum()
+                prob = copy.deepcopy(self.p_model.theta[i])
                 sample.append(np.random.choice(self.sample_index[i], p=prob))
             else:
                 sample.append(np.random.choice(self.sample_index[i]))
@@ -97,25 +89,40 @@ class Dynamic_SNG:
 
     def update(self):
         if len(self.sample_index[0]) == 0:
+            self.update_sample_index()
             sample_array = []
             objective = np.array(self.objective)
             if len(np.array(self.sample).shape) == 2:
                 for sample in self.sample:
-                    sample_array.append(utils.index_to_one_hot(sample, self.p_model.Cmax))
+                    # find real one hot vector in theta
+                    theta_index = [self.sample_index[i].index(sample[i]) for i in range(len(sample))]
+                    theta_index = np.array(theta_index)
+                    sample_array.append(utils.index_to_one_hot(theta_index, len(self.sample_index[0])))
             sample_array = np.array(sample_array)
             self.update_function(sample_array, objective)
             self.sample = []
             self.objective = []
             self.current_step += 1
             if self.pruning and self.current_step > self.steps:
+                new_theta = []
                 #pruning the index
                 pruned_weight = copy.deepcopy(self.p_model.theta)
                 for index in range(self.p_model.d):
-                    if not len(self.pruned_index[index]) == 0:
-                        pruned_weight[index, self.pruned_index[index]] = np.nan
-                    self.pruned_index[index].append(np.nanargmin(pruned_weight[index, :]))
-                if len(self.pruned_index[0]) >= (self.p_model.Cmax - 1):
+                    pruned_index_weight = np.nanargmin(pruned_weight[index, :])
+                    # append the true index
+                    self.pruned_index[index].append(self.sample_index[index][pruned_index_weight])
+                    _weight = np.delete(self.p_model.theta[index], pruned_index_weight)
+                    _weight = _weight / _weight.sum()
+                    new_theta.append(_weight)
+                # update category distribution
+                self.p_model.C = self.p_model.C - 1
+                self.p_model.theta = np.array(new_theta)
+
+                if len(self.pruned_index[0]) >= self.p_model.Cmax:
                     self.training_finish = True
+                    self.p_model.theta = np.zeros((self.p_model.d, self.p_model.Cmax))
+                    for i in range(self.p_model.d):
+                        self.p_model.theta[i, self.sample_index[i]] = 1.
                 self.current_step = 1
             self.update_sample_index()
 
@@ -158,8 +165,7 @@ class Dynamic_SNG:
             # Ensure the summation to 1
             self.p_model.theta[i, :ci] /= self.p_model.theta[i, :ci].sum()
 
-    @staticmethod
-    def utility(f, rho=0.25, negative=True):
+    def utility(self, f, rho=0.25, negative=True):
         """
         Ranking Based Utility Transformation
 
@@ -184,9 +190,15 @@ class Dynamic_SNG:
         idx = np.argsort(f)
         lam = len(f)
         mu = int(np.ceil(lam * rho))
-        _w = np.zeros(lam)
-        _w[:mu] = 1 / mu
-        _w[lam - mu:] = -1 / mu if negative else 0
+        if self.utility_function == 'picewise':
+            _w = np.zeros(lam)
+            _w[:mu] = 1 / mu
+            _w[lam - mu:] = -1 / mu if negative else 0
+        elif self.utility_function == 'log':
+            _w = np.zeros(lam)
+            _x = np.array([i+1 for i in range(lam)])
+            _x = (_x - np.mean(_x)) / np.max(_x)
+            _w = np.flip(np.clip(self.utility_function_hyper * np.log((1+_x)/(1-_x)), a_min=-1, a_max=1))
         w = np.zeros(lam)
         istart = 0
         for i in range(f.shape[0] - 1):

@@ -106,6 +106,14 @@ class ASNG:
             s_i += np.sqrt(theta_i) * ng[i, :K - 1].sum() / (theta_K + np.sqrt(theta_K))
             sl += list(s_i)
         sl = np.array(sl)
+        # test code
+        # sl_2 = []
+        # for i, K in enumerate(self.p_model.C):
+        #     theta_i = self.p_model.theta[i, :K]
+        #     s_i = 1. / np.sqrt(theta_i) * ng[i, :K]
+        #     sl_2 += list(s_i)
+        # sl_2 = np.array(sl_2)
+        # pnorm_2 = np.sqrt(np.dot(sl_2, sl_2)) + 1e-9
 
         pnorm = np.sqrt(np.dot(sl, sl)) + 1e-9
         self.eps = self.delta / pnorm
