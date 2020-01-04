@@ -1,7 +1,7 @@
 import numpy as np
 import tqdm
 from search_algorithm import Category_DDPNAS, Category_MDENAS, Category_SNG, \
-    Category_ASNG, Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V2
+    Category_ASNG, Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3
 from test.search_algorithm_test_function import SumCategoryTestFunction
 
 
@@ -17,19 +17,20 @@ def get_optimizer(name, category):
     elif name == 'dynamic_ASNG':
         return Category_Dynamic_ASNG.Dynamic_ASNG(categories=category, step=10, pruning=True)
     elif name == 'dynamic_SNG':
-        return Category_Dynamic_SNG.Dynamic_SNG(categories=category, step=3,
+        return Category_Dynamic_SNG.Dynamic_SNG(categories=category, step=10,
                                                 pruning=False, sample_with_prob=False)
-    elif name == 'dynamic_SNG_V2':
-        return Category_Dynamic_SNG_V2.Dynamic_SNG(categories=category, step=10,
-                                                   pruning=True, sample_with_prob=False,
-                                                   utility_function='picewise', utility_function_hyper=0.1)
+    elif name == 'dynamic_SNG_V3':
+        return Category_Dynamic_SNG_V3.Dynamic_SNG(categories=category, step=10,
+                                                   pruning=False, sample_with_prob=False,
+                                                   utility_function='picewise', utility_function_hyper=0.4,
+                                                   momentum=False, gamma=1)
     else:
         raise NotImplementedError
 
 
 category = [10]*10
 test_function = SumCategoryTestFunction(category)
-optimizer_name = 'ASNG'
+optimizer_name = 'dynamic_SNG_V3'
 
 # distribution_optimizer = Category_DDPNAS.CategoricalDDPNAS(category, 3)
 distribution_optimizer = get_optimizer(optimizer_name, category)
@@ -37,7 +38,7 @@ runing_times = 1000
 runing_epochs = 1000
 record = {
     'objective': np.zeros([runing_times, runing_epochs]) - 1,
-    'l2_distance': np.zeros([runing_times, runing_epochs]) -1,
+    'l2_distance': np.zeros([runing_times, runing_epochs]) - 1,
 }
 for i in tqdm.tqdm(range(runing_times)):
     for j in range(runing_epochs):

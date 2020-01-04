@@ -1,7 +1,8 @@
 import numpy as np
 # test function
-class TestFunction:
 
+
+class TestFunction:
     def optimal_value(self):
         raise NotImplementedError
 
@@ -24,3 +25,4 @@ class SumCategoryTestFunction(TestFunction):
 
     def l2_distance(self, sample):
         return np.sum((self.optimal_value() - sample) ** 2)
+

@@ -150,9 +150,9 @@ class WhiteNoiseKernel(Kernel):
 class SampleKernel(Kernel):
     """docstring for Kernel"""
 
-    def __init__(self, intra_class_distance = 1,
-                 inter_class_distance = 2,
-                 set_list = [[3, 4, 5, 6], [0, 1, 2], [7]]):
+    def __init__(self, intra_class_distance=1,
+                 inter_class_distance=2,
+                 set_list=[[3, 4, 5, 6], [0, 1, 2], [7]]):
         super(Kernel, self).__init__()
         self.intra_class_distance = intra_class_distance
         self.inter_class_distance = inter_class_distance
