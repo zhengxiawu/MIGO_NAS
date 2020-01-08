@@ -28,7 +28,7 @@ def get_optimizer(name, category):
         raise NotImplementedError
 
 
-category = [10]*10
+category = [10, 9, 10, 9, 10]
 test_function = SumCategoryTestFunction(category)
 optimizer_name = 'dynamic_SNG_V3'
 
