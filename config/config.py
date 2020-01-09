@@ -61,7 +61,7 @@ def _parser(parser):
     parser.add_argument('--dropout', type=float, default=0)
     # training parser
     parser.add_argument('--w_lr', type=float, default=0.1, help='lr for weights')
-    parser.add_argument('--w_lr_step', type=int, default=30, help='lr for weights')
+    parser.add_argument('--w_lr_step', type=int, default=40, help='lr for weights')
     parser.add_argument('--w_lr_gamma', type=float, default=0.1, help='minimum lr for weights')
     parser.add_argument('--w_momentum', type=float, default=0.9, help='momentum for weights')
     parser.add_argument('--w_weight_decay', type=float, default=3e-4,
@@ -77,8 +77,6 @@ def _parser(parser):
     # random seed
     parser.add_argument('--seed', type=int, default=2, help='random seed')
     parser.add_argument('--deterministic', type=bool, default=True, help='cudnn switch')
-
-
 
 
 class SearchConfig(BaseConfig):

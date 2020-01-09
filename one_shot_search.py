@@ -148,11 +148,13 @@ def main():
         if hasattr(distribution_optimizer, 'training_finish'):
             if distribution_optimizer.training_finish:
                 break
-        if epoch % config.w_lr_step == 0 and 'dynamic' not in config.name:
-            lr_scheduler.step()
-        elif epoch > lr_flag * config.w_lr_step and len(distribution_optimizer.sample_index) == 0:
-            lr_scheduler.step()
-            lr_flag += 1
+        if 'dynamic' in config.name:
+            if epoch >= lr_flag * config.w_lr_step and len(distribution_optimizer.sample_index) == 0:
+                lr_scheduler.step()
+                lr_flag += 1
+        else:
+            if epoch % config.w_lr_step == 0:
+                lr_scheduler.step()
         lr = lr_scheduler.get_lr()[0]
         sample = distribution_optimizer.sampling_index()
         # training
