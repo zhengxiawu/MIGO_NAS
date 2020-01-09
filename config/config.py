@@ -44,7 +44,7 @@ def dataset_parser(parser):
     parser.add_argument('--image_size', type=int, default=0, help='The size of the input Image')
     parser.add_argument('--batch_size', type=int, default=256, help='Batch size for the data set')
     # in search phase
-    parser.add_argument('--datset_split', type=int, default=2, help='dataset split')
+    parser.add_argument('--datset_split', type=int, default=10, help='dataset split')
     parser.add_argument('--workers', type=int, default=4, help='# of workers')
 
 
