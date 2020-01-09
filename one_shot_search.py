@@ -200,9 +200,8 @@ def train(train_loader, valid_loader, model, w_optim, lr, epoch, sample):
 
     model.train()
 
-    for step, ((trn_X, trn_y), (val_X, val_y)) in enumerate(zip(train_loader, valid_loader)):
+    for step, (trn_X, trn_y) in enumerate(train_loader):
         trn_X, trn_y = trn_X.to(device), trn_y.to(device)
-        val_X, val_y = val_X.to(device), val_y.to(device)
         N = trn_X.size(0)
         w_optim.zero_grad()
         logits = model(trn_X, sample)
