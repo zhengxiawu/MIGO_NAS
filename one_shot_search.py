@@ -7,9 +7,10 @@ from tensorboardX import SummaryWriter
 from config.config import SearchConfig
 import utils.utils as utils
 from model.darts_cnn import SelectSearchCNN
+from model.proxyless_cnn import SuperProxylessNASNets
 from datasets import get_data
 from search_algorithm import Category_MDENAS, Category_DDPNAS, Category_SNG, Category_ASNG, \
-    Category_Dynamic_ASNG, Category_Dynamic_SNG
+    Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3
 from utils import genotypes
 import random
 import pdb
@@ -48,15 +49,33 @@ def main():
 
     # get data with meta info
     input_size, input_channels, n_classes, train_data = get_data.get_data(
-        config.dataset, config.data_path, cutout_length=0, validation=False)
+        config.dataset, config.data_path, cutout_length=0, validation=False,
+        image_size=config.image_size)
+    minimum_image_size = 4 if config.search_space == 'darts' else int(np.prod(np.array(config.stride_stages))*2)
+    assert input_size >= minimum_image_size, "input image too small!!"
 
     # init model and net crit
     net_crit = nn.CrossEntropyLoss().to(device)
-    model = SelectSearchCNN(input_channels, config.init_channels, n_classes,
-                            config.layers, config.n_nodes, net_crit)
+    if config.search_space == 'darts':
+        model = SelectSearchCNN(input_channels, config.init_channels, n_classes,
+                                config.layers, config.n_nodes, net_crit)
+        total_edges = sum(list(range(2, config.n_nodes + 2))) * 2
+        num_ops = len(genotypes.PRIMITIVES)
+    elif config.search_space == 'proxyless_nas':
+        model = SuperProxylessNASNets(
+            width_stages=config.width_stages, n_cell_stages=config.n_cell_stages, stride_stages=config.stride_stages,
+            conv_candidates=config.conv_candidates, n_classes=n_classes,
+            width_mult=config.width_mult,
+            bn_param=(config.bn_momentum, config.bn_eps), dropout_rate=config.dropout,
+            criterion=net_crit
+        )
+        total_edges = len(model.blocks)
+        num_ops = len(config.conv_candidates) + 1
+    else:
+        raise NotImplementedError
     model = model.to(device)
     # weights optimizer
-    w_optim = torch.optim.SGD(model.weights(), config.w_lr, momentum=config.w_momentum,
+    w_optim = torch.optim.SGD(model.weight_parameters(), config.w_lr, momentum=config.w_momentum,
                               weight_decay=config.w_weight_decay)
 
     # split data to train/validation
@@ -75,12 +94,11 @@ def main():
                                                sampler=valid_sampler,
                                                num_workers=config.workers,
                                                pin_memory=True)
+
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        w_optim, config.epochs, eta_min=config.w_lr_min)
+        w_optim, int(config.epochs/num_ops) + 1, eta_min=config.w_lr_min)
 
     # init optimizer
-    total_edges = sum(list(range(2, config.n_nodes + 2))) * 2
-    num_ops = len(genotypes.PRIMITIVES)
     if config.name == 'MDENAS':
         distribution_optimizer = Category_MDENAS.CategoricalMDENAS(
             [num_ops]*total_edges, learning_rate=config.theta_lr)
@@ -101,6 +119,11 @@ def main():
         distribution_optimizer = Category_Dynamic_SNG.Dynamic_SNG(categories=[num_ops]*total_edges,
                                                                     step=3,
                                                                     pruning=True)
+    elif config.name == 'dynamic_SNG_V3':
+        return Category_Dynamic_SNG_V3.Dynamic_SNG(categories=[num_ops]*total_edges, step=3,
+                                                   pruning=True, sample_with_prob=False,
+                                                   utility_function='log', utility_function_hyper=0.4,
+                                                   momentum=True, gamma=0.9)
     else:
         raise NotImplementedError
     # training loop
@@ -117,6 +140,7 @@ def main():
     logger.info("end warm up training")
     logger.info("start One shot searching")
     best_top1 = 0.
+    best_genotype = None
     for epoch in range(config.epochs):
         if hasattr(distribution_optimizer, 'training_finish'):
             if distribution_optimizer.training_finish:
@@ -153,6 +177,7 @@ def main():
 
     logger.info("Final best Prec@1 = {:.4%}".format(best_top1))
     logger.info("Best Genotype = {}".format(best_genotype))
+    logger.info("Training is done, saving the probability")
     np.save(os.path.join(config.path, 'probability.npy'), distribution_optimizer.p_model.theta)
 
 

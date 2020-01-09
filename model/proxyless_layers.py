@@ -2,7 +2,7 @@
 # Han Cai, Ligeng Zhu, Song Han
 # International Conference on Learning Representations (ICLR), 2019.
 
-from .base_module import MyModule
+from .base_module import MyModule, MyNetwork
 from collections import OrderedDict
 import torch.nn as nn
 from utils.utils import *

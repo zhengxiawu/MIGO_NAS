@@ -1,11 +1,11 @@
 from model.darts_cell import *
 import utils.genotypes as gt
 import numpy as np
-from model.base_module import MyModule
+from model.base_module import MyModule, MyNetwork
 
 
 # search cnn
-class SelectSearchCNN(MyModule):
+class SelectSearchCNN(MyNetwork):
 
     def __init__(self, C_in=3, C=16, n_classes=10, n_layers=8, n_nodes=4, net_ceri=None):
         super().__init__()

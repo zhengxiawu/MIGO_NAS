@@ -41,7 +41,7 @@ def dataset_parser(parser):
     parser.add_argument('--dataset', required=False, default='CIFAR10', help='CIFAR10 / MNIST / FashionMNIST / ImageNet')
     parser.add_argument('--data_path', required=False, default='/userhome/data/cifar10',
                         help='data path')
-    parser.add_argument('--image_size', type=int, default=32, help='The size of the input Image')
+    parser.add_argument('--image_size', type=int, default=0, help='The size of the input Image')
     parser.add_argument('--batch_size', type=int, default=256, help='Batch size for the data set')
     # in search phase
     parser.add_argument('--datset_split', type=int, default=2, help='dataset split')
@@ -91,7 +91,7 @@ class SearchConfig(BaseConfig):
     def build_parser():
         parser = get_parser("Search config")
         parser.add_argument('--name', default='DDPNAS', required=False,
-                            help='MDENAS / DDPNAS / SNG/ ASNG/ dynamic_ASNG/ others will be comming soon')
+                            help='MDENAS / DDPNAS / SNG/ ASNG/ dynamic_ASNG/ dynamic_SNG_V3/others will be comming soon')
         parser.add_argument('--search_space', default='darts', required=False,
                             help='darts/ proxyless_nas/ others will be comming soon')
         parser.add_argument('--sub_name', default='', required=False)
@@ -111,6 +111,7 @@ class SearchConfig(BaseConfig):
                                  self.sub_name + '_' + time_str)
         # self.plot_path = os.path.join(self.path, 'plots')
         self.gpus = parse_gpus(self.gpus)
+        self.image_size = None if self.image_size == 0 else self.image_size
         if self.search_space == 'proxyless_nas':
             self.width_stages = [int(val) for val in args.width_stages.split(',')]
             self.n_cell_stages = [int(val) for val in args.n_cell_stages.split(',')]

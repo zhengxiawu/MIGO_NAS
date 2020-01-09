@@ -21,14 +21,14 @@ def get_optimizer(name, category):
                                                 pruning=False, sample_with_prob=False)
     elif name == 'dynamic_SNG_V3':
         return Category_Dynamic_SNG_V3.Dynamic_SNG(categories=category, step=10,
-                                                   pruning=False, sample_with_prob=False,
-                                                   utility_function='picewise', utility_function_hyper=0.4,
-                                                   momentum=False, gamma=1)
+                                                   pruning=True, sample_with_prob=False,
+                                                   utility_function='log', utility_function_hyper=0.4,
+                                                   momentum=True, gamma=0.9)
     else:
         raise NotImplementedError
 
 
-category = [10, 9, 10, 9, 10]
+category = [10]*10
 test_function = SumCategoryTestFunction(category)
 optimizer_name = 'dynamic_SNG_V3'
 

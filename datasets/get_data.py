@@ -1,5 +1,6 @@
 import torchvision.datasets as dset
 import datasets.preproc as preproc
+import torchvision.transforms as transforms
 import os
 try:
     from nvidia.dali.plugin.pytorch import DALIClassificationIterator
@@ -10,7 +11,7 @@ except ImportError:
     raise ImportError("Please install DALI from https://www.github.com/NVIDIA/DALI to run this example.")
 
 
-def get_data(dataset, data_path, cutout_length, validation):
+def get_data(dataset, data_path, cutout_length, validation, image_size=None):
     """ Get torchvision dataset """
     dataset = dataset.lower()
 
@@ -30,6 +31,8 @@ def get_data(dataset, data_path, cutout_length, validation):
         raise ValueError(dataset)
 
     trn_transform, val_transform = preproc.data_transforms(dataset, cutout_length)
+    if image_size is not None:
+        trn_transform.transforms.append(transforms.Resize(image_size))
     if dataset == 'imagenet':
         trn_data = dset_cls(root=os.path.join(data_path, 'train'), transform=trn_transform)
     else:
@@ -45,7 +48,7 @@ def get_data(dataset, data_path, cutout_length, validation):
             shape = trn_data.train_data.shape
     input_channels = 3 if len(shape) == 4 else 1
     assert shape[1] == shape[2], "not expected shape = {}".format(shape)
-    input_size = shape[1]
+    input_size = shape[1] if image_size is None else image_size
 
     ret = [input_size, input_channels, n_classes, trn_data]
     if validation:  # append validation data

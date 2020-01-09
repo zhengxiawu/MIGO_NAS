@@ -2,8 +2,46 @@ import math
 
 import torch.nn as nn
 
-
 class MyModule(nn.Module):
+
+    def forward(self, *x):
+        raise NotImplementedError
+
+    @property
+    def module_str(self):
+        raise NotImplementedError
+
+    @property
+    def config(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def build_from_config(config):
+        raise NotImplementedError
+
+    def get_flops(self, x):
+        raise NotImplementedError
+
+
+class MyNetwork(MyModule):
+
+    def forward(self, *x):
+        raise NotImplementedError
+
+    @property
+    def module_str(self):
+        raise NotImplementedError
+
+    @property
+    def config(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def build_from_config(config):
+        raise NotImplementedError
+
+    def get_flops(self, x):
+        raise NotImplementedError
 
     def set_bn_param(self, momentum, eps):
         for m in self.modules():
@@ -11,7 +49,7 @@ class MyModule(nn.Module):
                 m.momentum = momentum
                 m.eps = eps
         return
-    
+
     def get_bn_param(self):
         for m in self.modules():
             if isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.BatchNorm1d):
@@ -73,6 +111,8 @@ class MyModule(nn.Module):
         else:
             raise ValueError('do not support: %s' % mode)
 
+    def weight_parameters(self):
+        return self.get_parameters()
+
     def weights(self):
-        for k, v in self.named_parameters():
-                yield v
+        return self.get_parameters()

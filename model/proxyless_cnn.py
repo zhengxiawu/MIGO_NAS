@@ -9,7 +9,7 @@ from model.proxyless_ops import *
 from utils import LatencyEstimator
 
 
-class MobileInvertedResidualBlock(MyModule):
+class MobileInvertedResidualBlock(MyNetwork):
 
     def __init__(self, mobile_inverted_conv, shortcut):
         super(MobileInvertedResidualBlock, self).__init__()
@@ -58,13 +58,14 @@ class MobileInvertedResidualBlock(MyModule):
         return flops1 + flops2, self.forward(x)
 
 
-class SuperProxylessNASNets(MyModule):
+class SuperProxylessNASNets(MyNetwork):
 
     def __init__(self, width_stages, n_cell_stages, conv_candidates, stride_stages,
-                 n_classes=1000, width_mult=1, bn_param=(0.1, 1e-3), dropout_rate=0):
+                 n_classes=1000, width_mult=1, bn_param=(0.1, 1e-3), dropout_rate=0, criterion =None):
         super(SuperProxylessNASNets, self).__init__()
         self._redundant_modules = None
         self._unused_modules = None
+        self.criterion = criterion
 
         input_channel = make_divisible(32 * width_mult, 8)
         first_cell_width = make_divisible(16 * width_mult, 8)
@@ -87,7 +88,8 @@ class SuperProxylessNASNets(MyModule):
         input_channel = first_cell_width
 
         # blocks
-        blocks = []
+        blocks = nn.ModuleList()
+        self.candidate_ops = []
         for width, n_cell, s in zip(width_stages, n_cell_stages, stride_stages):
             for i in range(n_cell):
                 if i == 0:
@@ -98,7 +100,8 @@ class SuperProxylessNASNets(MyModule):
                 if stride == 1 and input_channel == width:
                     modified_conv_candidates = conv_candidates + ['Zero']
                 else:
-                    modified_conv_candidates = conv_candidates
+                    modified_conv_candidates = conv_candidates + ['3x3_MBConv1']
+                self.candidate_ops.append(modified_conv_candidates)
                 conv_op = MixedEdge(candidate_ops=build_candidate_ops(
                     modified_conv_candidates, input_channel, width, stride, 'weight_bn_act',
                 ), )
@@ -123,6 +126,7 @@ class SuperProxylessNASNets(MyModule):
         self.blocks = blocks
         self.feature_mix_layer = feature_mix_layer
         self.classifier = classifier
+        self.global_avg_pooling = nn.AdaptiveAvgPool2d(1)
 
         # set bn param
         self.set_bn_param(momentum=bn_param[0], eps=bn_param[1])
@@ -131,6 +135,12 @@ class SuperProxylessNASNets(MyModule):
         x = self.first_conv(x)
         x = self.first_block(x)
         assert len(self.blocks) == len(sample)
+        for i in range(len(self.blocks)):
+            this_block_conv = self.blocks[i].mobile_inverted_conv
+            if isinstance(this_block_conv, MixedEdge):
+                this_block_conv.active_index = [sample[i]]
+            else:
+                raise NotImplementedError
         for block in self.blocks:
             x = block(x)
         x = self.feature_mix_layer(x)
@@ -145,7 +155,6 @@ class SuperProxylessNASNets(MyModule):
         for block in self.blocks:
             _str += block.unit_str + '\n'
         return _str
-
 
     def get_flops(self, x):
         flop, x = self.first_conv.get_flops(x)
@@ -304,4 +313,11 @@ class SuperProxylessNASNets(MyModule):
         delta_flop, x = self.classifier.get_flops(x)
         expected_flops = expected_flops + delta_flop
         return expected_flops
+
+    def genotype(self, theta):
+        genotype = []
+        for i in range(theta.shape[0]):
+            genotype.append(self.candidate_ops[i][np.argmax(theta[i])])
+        return genotype
+
 
