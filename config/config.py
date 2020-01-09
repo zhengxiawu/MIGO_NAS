@@ -37,33 +37,37 @@ class BaseConfig(argparse.Namespace):
         return text
 
 
-def dataset_parser(parser):
+def _parser(parser):
+    # dataset parser
     parser.add_argument('--dataset', required=False, default='CIFAR10', help='CIFAR10 / MNIST / FashionMNIST / ImageNet')
     parser.add_argument('--data_path', required=False, default='/userhome/data/cifar10',
                         help='data path')
     parser.add_argument('--image_size', type=int, default=0, help='The size of the input Image')
     parser.add_argument('--batch_size', type=int, default=256, help='Batch size for the data set')
-    # in search phase
     parser.add_argument('--datset_split', type=int, default=10, help='dataset split')
     parser.add_argument('--workers', type=int, default=4, help='# of workers')
-
-
-def network_parser(parser):
-    parser.add_argument('--w_lr', type=float, default=0.025, help='lr for weights')
-    parser.add_argument('--w_lr_step', type=int, default=2, help='lr for weights')
-    parser.add_argument('--w_lr_min', type=float, default=0.001, help='minimum lr for weights')
+    # network parser:darts
+    parser.add_argument('--init_channels', type=int, default=16)
+    parser.add_argument('--layers', type=int, default=8, help='# of layers')
+    # node is fixed in most case
+    parser.add_argument('--n_nodes', type=int, default=4, help='# nodes in each cell')
+    # network parser:proxy_less_nas
+    parser.add_argument('--width_stages', type=str, default='24,40,80,96,192,320')
+    parser.add_argument('--n_cell_stages', type=str, default='4,4,4,4,4,1')
+    parser.add_argument('--stride_stages', type=str, default='2,2,2,1,2,1')
+    parser.add_argument('--width_mult', type=float, default=1.0)
+    parser.add_argument('--bn_momentum', type=float, default=0.1)
+    parser.add_argument('--bn_eps', type=float, default=1e-3)
+    parser.add_argument('--dropout', type=float, default=0)
+    # training parser
+    parser.add_argument('--w_lr', type=float, default=0.1, help='lr for weights')
+    parser.add_argument('--w_lr_step', type=int, default=30, help='lr for weights')
+    parser.add_argument('--w_lr_gamma', type=float, default=0.1, help='minimum lr for weights')
     parser.add_argument('--w_momentum', type=float, default=0.9, help='momentum for weights')
     parser.add_argument('--w_weight_decay', type=float, default=3e-4,
                         help='weight decay for weights')
     parser.add_argument('--w_grad_clip', type=float, default=5.,
                         help='gradient clipping for weights')
-    parser.add_argument('--init_channels', type=int, default=16)
-    parser.add_argument('--layers', type=int, default=8, help='# of layers')
-    # node is fixed in most case
-    parser.add_argument('--n_nodes', type=int, default=4, help='# nodes in each cell')
-
-
-def train_parser(parser):
     parser.add_argument('--print_freq', type=int, default=50, help='print frequency')
     parser.add_argument('--gpus', default='0', help='gpu device ids separated by comma. '
                                                     '`all` indicates use all gpus.')
@@ -75,15 +79,6 @@ def train_parser(parser):
     parser.add_argument('--deterministic', type=bool, default=True, help='cudnn switch')
 
 
-def proxyless_network_parser(parser):
-    """ net config """
-    parser.add_argument('--width_stages', type=str, default='24,40,80,96,192,320')
-    parser.add_argument('--n_cell_stages', type=str, default='4,4,4,4,4,1')
-    parser.add_argument('--stride_stages', type=str, default='2,2,2,1,2,1')
-    parser.add_argument('--width_mult', type=float, default=1.0)
-    parser.add_argument('--bn_momentum', type=float, default=0.1)
-    parser.add_argument('--bn_eps', type=float, default=1e-3)
-    parser.add_argument('--dropout', type=float, default=0)
 
 
 class SearchConfig(BaseConfig):
@@ -96,10 +91,7 @@ class SearchConfig(BaseConfig):
                             help='darts/ proxyless_nas/ others will be comming soon')
         parser.add_argument('--sub_name', default='', required=False)
         
-        train_parser(parser)
-        network_parser(parser)
-        dataset_parser(parser)
-        proxyless_network_parser(parser)
+        _parser(parser)
         return parser
 
     def __init__(self):

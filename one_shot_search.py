@@ -94,9 +94,11 @@ def main():
                                                sampler=valid_sampler,
                                                num_workers=config.workers,
                                                pin_memory=True)
-
-    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        w_optim, int(config.epochs/num_ops) + 1, eta_min=config.w_lr_min)
+    # using step learning rate instead
+    # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+    #     w_optim, int(config.epochs/num_ops) + 1, eta_min=config.w_lr_min)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(
+         w_optim, step_size=config.w_lr_step, gamma=config.w_lr_gamma)
 
     # init optimizer
     if config.name == 'MDENAS':
@@ -129,7 +131,7 @@ def main():
     # training loop
     logger.info("start warm up training")
     for epoch in range(config.warm_up_epochs):
-        lr_scheduler.step()
+        # lr_scheduler.step()
         lr = lr_scheduler.get_lr()[0]
         # warm up training
         array_sample = [random.sample(list(range(num_ops)), num_ops) for i in range(total_edges)]
@@ -141,12 +143,16 @@ def main():
     logger.info("start One shot searching")
     best_top1 = 0.
     best_genotype = None
+    lr_flag = 1
     for epoch in range(config.epochs):
         if hasattr(distribution_optimizer, 'training_finish'):
             if distribution_optimizer.training_finish:
                 break
-        if epoch % config.w_lr_step == 0:
+        if epoch % config.w_lr_step == 0 and 'dynamic' not in config.name:
             lr_scheduler.step()
+        elif epoch > lr_flag * config.w_lr_step and len(distribution_optimizer.sample_index) == 0:
+            lr_scheduler.step()
+            lr_flag += 1
         lr = lr_scheduler.get_lr()[0]
         sample = distribution_optimizer.sampling_index()
         # training
@@ -162,6 +168,7 @@ def main():
         # genotype
         genotype = model.genotype(distribution_optimizer.p_model.theta)
         logger.info("genotype: {}".format(genotype))
+        logger.info("The learning rate is: {}".format(lr))
         # logger.info("the theta is = {}".format(distribution_optimizer.p_model.theta))
 
         # save
