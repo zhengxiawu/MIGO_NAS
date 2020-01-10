@@ -83,7 +83,7 @@ class SearchConfig(BaseConfig):
     @staticmethod
     def build_parser():
         parser = get_parser("Search config")
-        parser.add_argument('--name', default='DDPNAS', required=False,
+        parser.add_argument('--name', default='dynamic_SNG_V3', required=False,
                             help='MDENAS / DDPNAS / SNG/ ASNG/ dynamic_ASNG/ dynamic_SNG_V3/others will be comming soon')
         parser.add_argument('--search_space', default='darts', required=False,
                             help='darts/ proxyless_nas/ others will be comming soon')

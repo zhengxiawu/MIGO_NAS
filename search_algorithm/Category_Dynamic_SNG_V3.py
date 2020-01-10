@@ -17,8 +17,6 @@ class Dynamic_SNG:
                  init_theta=None, max_mize=True, sample_with_prob=False,
                  utility_function='picewise', utility_function_hyper=0.5,
                  momentum=True, gamma=0.9):
-
-        self.N = np.sum(np.array(categories) - 1)
         # Categorical distribution
         self.p_model = Categorical(categories)
         # valid dimension size

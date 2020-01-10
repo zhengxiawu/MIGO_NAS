@@ -143,3 +143,7 @@ def count_conv_flop(layer, x):
                 out_h * out_w / layer.groups
     return delta_ops
 
+
+def step_learning_rate(optimizer, gamma=0.1):
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = param_group['lr'] * gamma
