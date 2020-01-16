@@ -2,6 +2,7 @@ import math
 
 import torch.nn as nn
 
+
 class MyModule(nn.Module):
 
     def forward(self, *x):
@@ -17,9 +18,6 @@ class MyModule(nn.Module):
 
     @staticmethod
     def build_from_config(config):
-        raise NotImplementedError
-
-    def get_flops(self, x):
         raise NotImplementedError
 
 
@@ -38,9 +36,6 @@ class MyNetwork(MyModule):
 
     @staticmethod
     def build_from_config(config):
-        raise NotImplementedError
-
-    def get_flops(self, x):
         raise NotImplementedError
 
     def set_bn_param(self, momentum, eps):

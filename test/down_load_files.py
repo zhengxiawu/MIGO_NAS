@@ -14,7 +14,11 @@ def download_url(url, model_dir='~/.torch/', overwrite=False):
     cached_file = model_dir
     sys.stderr.write('Downloading: "{}" to {}\n'.format(url, cached_file))
     for j in ['net.config', 'run.config']:
-        urlretrieve(url + j, os.path.join(cached_file, j))
+        if os.path.isfile(os.path.join(cached_file, j)):
+            pass
+        else:
+            _url = url + '/' + j
+            urlretrieve(url + '/' + j, os.path.join(cached_file, j))
     return cached_file
 
 
