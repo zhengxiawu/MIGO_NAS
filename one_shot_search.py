@@ -7,7 +7,7 @@ from tensorboardX import SummaryWriter
 from config.config import SearchConfig
 import utils.utils as utils
 from model.darts_cnn import SelectSearchCNN
-from model.proxyless_cnn import SuperProxylessNASNets
+from model.mb_v3_cnn import get_super_net
 from datasets import get_data
 from search_algorithm import Category_MDENAS, Category_DDPNAS, Category_SNG, Category_ASNG, \
     Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3
@@ -51,7 +51,7 @@ def main():
     input_size, input_channels, n_classes, train_data = get_data.get_data(
         config.dataset, config.data_path, cutout_length=0, validation=False,
         image_size=config.image_size)
-    minimum_image_size = 4 if config.search_space == 'darts' else int(np.prod(np.array(config.stride_stages))*2)
+    minimum_image_size = 4 if config.search_space == 'darts' else 32
     assert input_size >= minimum_image_size, "input image too small!!"
 
     # init model and net crit
@@ -61,18 +61,15 @@ def main():
                                 config.layers, config.n_nodes, net_crit)
         total_edges = sum(list(range(2, config.n_nodes + 2))) * 2
         num_ops = len(genotypes.PRIMITIVES)
-    elif config.search_space == 'proxyless_nas':
-        model = SuperProxylessNASNets(
-            width_stages=config.width_stages, n_cell_stages=config.n_cell_stages, stride_stages=config.stride_stages,
-            conv_candidates=config.conv_candidates, n_classes=n_classes,
-            width_mult=config.width_mult,
-            bn_param=(config.bn_momentum, config.bn_eps), dropout_rate=config.dropout,
-            criterion=net_crit
-        )
-        total_edges = len(model.blocks)
+    elif config.search_space in ['proxyless', 'google', 'ofa']:
+        model = get_super_net(n_classes=n_classes, base_stage_width=config.search_space,
+                              width_mult=config.width_mult, conv_candidates=config.conv_candidates,
+                              depth=config.depth)
+        total_edges = len(model.blocks) - 1
         num_ops = len(config.conv_candidates) + 1
     else:
         raise NotImplementedError
+    # pdb.set_trace()
     model = model.to(device)
     # weights optimizer
     w_optim = torch.optim.SGD(model.weight_parameters(), config.w_lr, momentum=config.w_momentum,
@@ -146,11 +143,11 @@ def main():
         sample = distribution_optimizer.sampling_index()
 
         # training
-        train(train_loader, valid_loader, model, w_optim, lr, epoch, sample)
+        train(train_loader, valid_loader, model, w_optim, lr, epoch, sample, net_crit)
 
         # validation
         cur_step = (epoch+1) * len(train_loader)
-        top1 = validate(valid_loader, model, epoch, cur_step, sample)
+        top1 = validate(valid_loader, model, epoch, cur_step, sample, net_crit)
         # information recoder
         if 'dynamic' or 'DDPNAS' in config.name:
             if epoch >= lr_flag * config.w_lr_step and len(distribution_optimizer.sample_index[0]) == 0:
@@ -185,7 +182,7 @@ def main():
     np.save(os.path.join(config.path, 'probability.npy'), distribution_optimizer.p_model.theta)
 
 
-def train(train_loader, valid_loader, model, w_optim, lr, epoch, sample):
+def train(train_loader, valid_loader, model, w_optim, lr, epoch, sample, net_crit):
     top1 = utils.AverageMeter()
     top5 = utils.AverageMeter()
     losses = utils.AverageMeter()
@@ -200,7 +197,7 @@ def train(train_loader, valid_loader, model, w_optim, lr, epoch, sample):
         N = trn_X.size(0)
         w_optim.zero_grad()
         logits = model(trn_X, sample)
-        loss = model.criterion(logits, trn_y)
+        loss = net_crit(logits, trn_y)
         loss.backward()
         # gradient clipping
         nn.utils.clip_grad_norm_(model.weights(), config.w_grad_clip)
@@ -226,7 +223,7 @@ def train(train_loader, valid_loader, model, w_optim, lr, epoch, sample):
     logger.info("Train: [{:2d}/{}] Final Prec@1 {:.4%}".format(epoch+1, config.epochs, top1.avg))
 
 
-def validate(valid_loader, model, epoch, cur_step, sample):
+def validate(valid_loader, model, epoch, cur_step, sample, net_crit):
     top1 = utils.AverageMeter()
     top5 = utils.AverageMeter()
     losses = utils.AverageMeter()
@@ -239,7 +236,7 @@ def validate(valid_loader, model, epoch, cur_step, sample):
             N = X.size(0)
 
             logits = model(X, sample)
-            loss = model.criterion(logits, y)
+            loss = net_crit(logits, y)
 
             prec1, prec5 = utils.accuracy(logits, y, topk=(1, 5))
             losses.update(loss.item(), N)

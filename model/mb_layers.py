@@ -197,6 +197,10 @@ class My2DLayer(MyModule):
     def build_from_config(config):
         raise NotImplementedError
 
+    @staticmethod
+    def is_zero_layer():
+        return False
+
 
 class ConvLayer(My2DLayer):
 
@@ -499,6 +503,10 @@ class LinearLayer(MyModule):
     def build_from_config(config):
         return LinearLayer(**config)
 
+    @staticmethod
+    def is_zero_layer():
+        return False
+
 
 class ZeroLayer(MyModule):
 
@@ -523,6 +531,10 @@ class ZeroLayer(MyModule):
     @staticmethod
     def build_from_config(config):
         return ZeroLayer(**config)
+
+    @staticmethod
+    def is_zero_layer():
+        return True
 
 
 class MBInvertedConvLayer(MyModule):
@@ -606,3 +618,7 @@ class MBInvertedConvLayer(MyModule):
     @staticmethod
     def build_from_config(config):
         return MBInvertedConvLayer(**config)
+
+    @staticmethod
+    def is_zero_layer():
+        return False

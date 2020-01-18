@@ -52,10 +52,9 @@ def _parser(parser):
     # node is fixed in most case
     parser.add_argument('--n_nodes', type=int, default=4, help='# nodes in each cell')
     # network parser:proxy_less_nas
-    parser.add_argument('--width_stages', type=str, default='24,40,80,96,192,320')
-    parser.add_argument('--n_cell_stages', type=str, default='4,4,4,4,4,1')
-    parser.add_argument('--stride_stages', type=str, default='2,2,2,1,2,1')
+    parser.add_argument('--depth', type=int, default=4)
     parser.add_argument('--width_mult', type=float, default=1.0)
+
     parser.add_argument('--bn_momentum', type=float, default=0.1)
     parser.add_argument('--bn_eps', type=float, default=1e-3)
     parser.add_argument('--dropout', type=float, default=0)
@@ -85,8 +84,8 @@ class SearchConfig(BaseConfig):
         parser = get_parser("Search config")
         parser.add_argument('--name', default='dynamic_SNG_V3', required=False,
                             help='MDENAS / DDPNAS / SNG/ ASNG/ dynamic_ASNG/ dynamic_SNG_V3/others will be comming soon')
-        parser.add_argument('--search_space', default='darts', required=False,
-                            help='darts/ proxyless_nas/ others will be comming soon')
+        parser.add_argument('--search_space', default='proxyless', required=False,
+                            help='darts/ proxyless/ google/ofa others will be comming soon')
         parser.add_argument('--sub_name', default='', required=False)
         
         _parser(parser)
@@ -102,10 +101,7 @@ class SearchConfig(BaseConfig):
         # self.plot_path = os.path.join(self.path, 'plots')
         self.gpus = parse_gpus(self.gpus)
         self.image_size = None if self.image_size == 0 else self.image_size
-        if self.search_space == 'proxyless_nas':
-            self.width_stages = [int(val) for val in args.width_stages.split(',')]
-            self.n_cell_stages = [int(val) for val in args.n_cell_stages.split(',')]
-            self.stride_stages = [int(val) for val in args.stride_stages.split(',')]
+        if self.search_space in ['proxyless', 'google', 'ofa']:
             self.conv_candidates = [
                 '3x3_MBConv3', '3x3_MBConv6',
                 '5x5_MBConv3', '5x5_MBConv6',
