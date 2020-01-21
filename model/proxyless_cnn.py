@@ -2,6 +2,8 @@
 # Han Cai, Ligeng Zhu, Song Han
 # International Conference on Learning Representations (ICLR), 2019.
 from model.mb_ops import *
+from utils import flops_counter
+import torch, pdb
 
 
 class ProxylessNASNets(MyNetwork):
@@ -25,6 +27,7 @@ class ProxylessNASNets(MyNetwork):
             base_stage_width = [32, 16, 24, 40, 80, 96, 192, 320, 1280]
         else:
             raise NotImplementedError
+        self.base_stage_width = base_stage_width
 
         input_channel = make_divisible(base_stage_width[0] * width_mult, 8)
         first_block_width = make_divisible(base_stage_width[1] * width_mult, 8)
@@ -111,11 +114,12 @@ class ProxylessNASNets(MyNetwork):
                 raise NotImplementedError
         for block in self.blocks:
             x = block(x)
-        x = self.global_avg_pooling(x)
         x = self.feature_mix_layer(x)
+        x = self.global_avg_pooling(x)
         x = x.view(x.size(0), -1)  # flatten
         x = self.classifier(x)
         return x
+
 
     @property
     def module_str(self):
@@ -146,5 +150,40 @@ class ProxylessNASNets(MyNetwork):
         for i in range(theta.shape[0]):
             genotype.append(self.candidate_ops[i][np.argmax(theta[i])])
         return genotype
+
+    def flops_counter_per_layer(self, input_size=None):
+        self.eval()
+        if input_size is None:
+            input_size = [1, 3, 224, 224]
+        original_device = self.parameters().__next__().device
+        x = torch.zeros(input_size).to(original_device)
+        first_conv_flpos, _ = flops_counter.profile(self.first_conv, input_size)
+        x = self.first_conv(x)
+        block_flops = []
+        for block in self.blocks:
+            if not isinstance(block.mobile_inverted_conv, MixedEdge):
+                _flops, _ = flops_counter.profile(block, x.size())
+                block_flops.append([_flops])
+                x = block(x)
+            else:
+                _flops_list = []
+                for i in range(block.mobile_inverted_conv.n_choices):
+                    if isinstance(block.mobile_inverted_conv.candidate_ops[i], ZeroLayer):
+                        _flops_list.append(0)
+                    else:
+                        _flops, _ = flops_counter.profile(block.mobile_inverted_conv.candidate_ops[i], x.size())
+                        _flops_list.append(_flops)
+                block_flops.append(_flops_list)
+                x = block(x)
+        feature_mix_layer_flops, _ = flops_counter.profile(self.feature_mix_layer, x.size())
+        x = self.feature_mix_layer(x)
+        x = self.global_avg_pooling(x)
+        x = x.view(x.size(0), -1)  # flatten
+        classifier_flops, _ = flops_counter.profile(self.classifier, x.size())
+        self.train()
+        return {'first_conv_flpos': first_conv_flpos,
+                'block_flops': block_flops,
+                'feature_mix_layer_flops': feature_mix_layer_flops,
+                'classifier_flops': classifier_flops}
 
 

@@ -157,20 +157,30 @@ class MixedEdge(MyModule):
     """ """
 
     def forward(self, x):
-        output = 0
-        for i in self.active_index:
-            oi = self.candidate_ops[i](x)
-            output = output + oi
-        return output
+        # output = 0
+        # for i in self.active_index:
+        #     oi = self.candidate_ops[i](x)
+        #     output = output + oi
+        # only support 1 selection
+        assert len(self.active_index) == 1
+        x = self.candidate_ops[self.active_index[0]](x)
+        return x
 
     @property
     def module_str(self):
         chosen_index, probs = self.chosen_index
         return 'Mix(%s, %.3f)' % (self.candidate_ops[chosen_index].module_str, probs)
 
+    @staticmethod
+    def name():
+        return 'MixedEdge'
+
     @property
     def config(self):
-        raise ValueError('not needed')
+        return {
+            'name': MixedEdge.__name__,
+            'selection': [i.config for i in self.candidate_ops],
+        }
 
     @staticmethod
     def build_from_config(config):

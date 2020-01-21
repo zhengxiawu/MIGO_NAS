@@ -5,6 +5,7 @@
 
 from model.mb_ops import *
 from model.proxyless_cnn import ProxylessNASNets
+from utils import flops_counter
 
 
 class MobileNetV3(MyNetwork):
@@ -26,6 +27,7 @@ class MobileNetV3(MyNetwork):
             base_stage_width = [16, 24, 40, 80, 112, 160, 960, 1280]
         else:
             raise NotImplementedError
+        self.base_stage_width = base_stage_width
         final_expand_width = make_divisible(base_stage_width[-2] * self.width_mult, 8)
         last_channel = make_divisible(base_stage_width[-1] * self.width_mult, 8)
 
@@ -125,7 +127,7 @@ class MobileNetV3(MyNetwork):
     @property
     def config(self):
         return {
-            'name': self.__name__,
+            'name': MobileNetV3.__name__,
             'bn': self.get_bn_param(),
             'first_conv': self.first_conv.config,
             'blocks': [
@@ -135,6 +137,44 @@ class MobileNetV3(MyNetwork):
             'feature_mix_layer': self.feature_mix_layer.config,
             'classifier': self.classifier.config,
         }
+
+    def flops_counter_per_layer(self, input_size=None):
+        if input_size is None:
+            input_size = [1, 3, 224, 224]
+        original_device = self.parameters().__next__().device
+        x = torch.zeros(input_size).to(original_device)
+        first_conv_flpos, _ = flops_counter.profile(self.first_conv, input_size)
+        x = self.first_conv(x)
+        block_flops = []
+        for block in self.blocks:
+            if not isinstance(block.mobile_inverted_conv, MixedEdge):
+                _flops, _ = flops_counter.profile(block, x.size())
+                block_flops.append([_flops])
+                x = block(x)
+            else:
+                _flops_list = []
+                for i in range(block.mobile_inverted_conv.n_choices):
+                    print(i)
+                    if isinstance(block.mobile_inverted_conv.candidate_ops[i], ZeroLayer):
+                        _flops_list.append(0)
+                    else:
+                        _flops, _ = flops_counter.profile(block.mobile_inverted_conv.candidate_ops[i], x.size())
+                        _flops_list.append(_flops)
+                block_flops.append(_flops_list)
+                x = block(x)
+        final_expand_layer_flops, _ = flops_counter.profile(self.final_expand_layer, x.size())
+        x = self.final_expand_layer(x)
+
+        x = self.global_avg_pooling(x)
+        feature_mix_layer_flops, _ = flops_counter.profile(self.feature_mix_layer, x.size())
+        x = self.feature_mix_layer(x)
+        x = x.view(x.size(0), -1)  # flatten
+        classifier_flops, _ = flops_counter.profile(self.classifier, x.size())
+        return {'first_conv_flpos': first_conv_flpos,
+                'block_flops': block_flops,
+                'final_expand_layer_flops': final_expand_layer_flops,
+                'feature_mix_layer_flops': feature_mix_layer_flops,
+                'classifier_flops': classifier_flops}
 
     @staticmethod
     def build_from_config(config):
@@ -153,8 +193,12 @@ def get_super_net(n_classes=1000, base_stage_width=None, width_mult=1.2, conv_ca
         return ProxylessNASNets(n_classes=n_classes, base_stage_width=base_stage_width,
                                 width_mult=width_mult, conv_candidates=conv_candidates,
                                 depth=depth)
-    else:
+    elif base_stage_width == 'ofa':
         return MobileNetV3(n_classes=n_classes, base_stage_width=base_stage_width,
                            width_mult=width_mult, conv_candidates=conv_candidates,
                            depth=depth)
+    else:
+        raise NotImplementedError
+
+
 

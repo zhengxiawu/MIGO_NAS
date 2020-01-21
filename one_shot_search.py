@@ -13,7 +13,7 @@ from search_algorithm import Category_MDENAS, Category_DDPNAS, Category_SNG, Cat
     Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3
 from utils import genotypes
 import random
-import pdb
+import json
 
 
 config = SearchConfig()
@@ -61,16 +61,25 @@ def main():
                                 config.layers, config.n_nodes, net_crit)
         total_edges = sum(list(range(2, config.n_nodes + 2))) * 2
         num_ops = len(genotypes.PRIMITIVES)
+        model = model.to(device)
     elif config.search_space in ['proxyless', 'google', 'ofa']:
         model = get_super_net(n_classes=n_classes, base_stage_width=config.search_space,
                               width_mult=config.width_mult, conv_candidates=config.conv_candidates,
                               depth=config.depth)
         total_edges = len(model.blocks) - 1
         num_ops = len(config.conv_candidates) + 1
+        model = model.to(device)
+        super_net_config_path = os.path.join(config.path, 'supernet.json')
+        super_net_config = model.config
+        logger.info("Saving search supernet to {}".format(super_net_config_path))
+        json.dump(super_net_config, open(super_net_config_path, 'a+'))
+        flops_path = os.path.join(config.path, 'flops.json')
+        flops_ = model.flops_counter_per_layer(input_size=[1, input_channels, input_size, input_size])
+        logger.info("Saving flops to {}".format(flops_path))
+        json.dump(flops_, open(flops_path, 'a+'))
     else:
         raise NotImplementedError
-    # pdb.set_trace()
-    model = model.to(device)
+
     # weights optimizer
     w_optim = torch.optim.SGD(model.weight_parameters(), config.w_lr, momentum=config.w_momentum,
                               weight_decay=config.w_weight_decay)
