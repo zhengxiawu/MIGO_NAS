@@ -139,6 +139,7 @@ class MobileNetV3(MyNetwork):
         }
 
     def flops_counter_per_layer(self, input_size=None):
+        self.eval()
         if input_size is None:
             input_size = [1, 3, 224, 224]
         original_device = self.parameters().__next__().device
@@ -154,7 +155,6 @@ class MobileNetV3(MyNetwork):
             else:
                 _flops_list = []
                 for i in range(block.mobile_inverted_conv.n_choices):
-                    print(i)
                     if isinstance(block.mobile_inverted_conv.candidate_ops[i], ZeroLayer):
                         _flops_list.append(0)
                     else:
@@ -170,6 +170,7 @@ class MobileNetV3(MyNetwork):
         x = self.feature_mix_layer(x)
         x = x.view(x.size(0), -1)  # flatten
         classifier_flops, _ = flops_counter.profile(self.classifier, x.size())
+        self.train()
         return {'first_conv_flpos': first_conv_flpos,
                 'block_flops': block_flops,
                 'final_expand_layer_flops': final_expand_layer_flops,

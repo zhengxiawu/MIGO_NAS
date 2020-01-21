@@ -114,17 +114,18 @@ def main():
             [num_ops]*total_edges)
     elif config.name == 'dynamic_ASNG':
         distribution_optimizer = Category_Dynamic_ASNG.Dynamic_ASNG(categories=[num_ops]*total_edges,
-                                                                    step=3,
+                                                                    step=config.pruning_step,
                                                                     pruning=True)
     elif config.name == 'dynamic_SNG':
         distribution_optimizer = Category_Dynamic_SNG.Dynamic_SNG(categories=[num_ops]*total_edges,
-                                                                    step=3,
-                                                                    pruning=True)
+                                                                  step=config.pruning_step,
+                                                                  pruning=True)
     elif config.name == 'dynamic_SNG_V3':
-        distribution_optimizer = Category_Dynamic_SNG_V3.Dynamic_SNG(categories=[num_ops]*total_edges, step=3,
-                                                   pruning=True, sample_with_prob=False,
-                                                   utility_function='log', utility_function_hyper=0.4,
-                                                   momentum=True, gamma=0.9)
+        distribution_optimizer = Category_Dynamic_SNG_V3.Dynamic_SNG(categories=[num_ops]*total_edges,
+                                                                     step=config.pruning_step,
+                                                                     pruning=True, sample_with_prob=False,
+                                                                     utility_function='log', utility_function_hyper=0.4,
+                                                                     momentum=True, gamma=0.9)
     else:
         raise NotImplementedError
     # training loop

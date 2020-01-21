@@ -76,6 +76,8 @@ def _parser(parser):
     # random seed
     parser.add_argument('--seed', type=int, default=2, help='random seed')
     parser.add_argument('--deterministic', type=bool, default=True, help='cudnn switch')
+    # optimizer parser
+    parser.add_argument('--pruning_step', type=int, default=3)
 
 
 class SearchConfig(BaseConfig):
@@ -96,8 +98,23 @@ class SearchConfig(BaseConfig):
         args = parser.parse_args()
         super().__init__(**vars(args))
         time_str = time.asctime(time.localtime()).replace(' ', '_')
+        name_componment = [self.search_space, self.sub_name,
+                           'epochs_' + str(self.epochs),
+                           'data_split_' + str(self.datset_split),
+                           'warm_up_epochs_' + str(self.warm_up_epochs),
+                           ]
+        if 'dynamic' in self.name:
+            name_componment += ['pruning_step_' + str(self.pruning_step)]
+        if self.search_space == 'darts':
+            name_componment += ['init_channels' + str(self.init_channels),
+                                'layers' + str(self.layers),
+                                'n_nodes' + str(self.n_nodes)]
+        name_str = ''
+        for i in name_componment:
+            name_str += i + '_'
+        name_str += time_str
         self.path = os.path.join('experiment', self.name,
-                                 self.sub_name + '_' + time_str)
+                                 name_str)
         # self.plot_path = os.path.join(self.path, 'plots')
         self.gpus = parse_gpus(self.gpus)
         self.image_size = None if self.image_size == 0 else self.image_size
