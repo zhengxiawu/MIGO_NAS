@@ -4,6 +4,8 @@ from utils import utils
 from utils import genotypes
 import os
 import copy
+import json
+import pdb
 
 
 def un_pack_list(input_list, n_node=4):
@@ -114,8 +116,8 @@ def get_network(probability, reduce_constrain=True, height_constraint=2, skip_co
                               reduce=best_reduce_gene, reduce_concat=concat)
 
 
-if __name__ == '__main__':
-    dir_name = '/userhome/project/DDPNAS_V2/experiment'
+def get_gene_by_dir(dir_name):
+    # dir_name = '/userhome/project/DDPNAS_V2/experiment'
     dirs = os.listdir(dir_name)
     height_constraints = [1, 2, 3, 4]
     skip_connection_constraints = [2, 4, 6, 8]
@@ -139,5 +141,92 @@ if __name__ == '__main__':
                     gen = get_network(_prob, reduce_constrain=_reduction,
                                       height_constraint=_height_constraint,
                                       skip_connection_constraint=_skip_connection_constraint)
-                    file.write(str(gen) +"\n")
+                    file.write(str(gen) + "\n")
                 file.close()
+
+
+def getw(w):
+    return int(w*100)
+
+
+def get_path(weight, constraint, FLOPS, unit = 1000.*1000.):
+    FLOPS *= unit
+    # n=20
+    # weight=np.array([np.random.rand(8) for i in range(n)])
+    # constraint=np.array([np.random.rand(8) for i in range(n)])
+    # print(weight.shape)
+    # print(constraint.shape)
+    # FLOPS=10
+    n = weight.shape[0]
+    c = weight.shape[1]
+    max_weight = 0
+    for i in range(n):
+        max_weight += int(np.max(weight[i])*100)  #保留小数点后两位
+    # print('max_weight:', max_weight)      #weigth最大可能取的值，作为状态的上限
+
+    dp = [[FLOPS*10 for i in range(max_weight+5)] for i in range(n)]
+    #定义dp[n][max_weight] dp[i][j]表示第i个节点，在权值和为j的情况下，能取到的最小的限制值
+    pre = np.zeros((n, max_weight+5), int)   #记录pre[i][j]的前驱节点，是由上个节点哪个状态(j)转移到的
+    chose = np.zeros((n, max_weight+5), int)   #记录dp[i][j]这个状态在节点i是选择了哪条路径
+
+    for i in range(c):  #对第0个节点初始化
+        w = getw(weight[0][i])
+        dp[0][w] = constraint[0][i]
+        pre[0][w] = -1     #-1表示没有前驱
+        chose[0][w] = i
+    ans = 0   #记录限制下可以取得的最大权值
+    endk = 0  #记录最后一个节点取了哪条path
+    for i in range(1, n):  #遍历每个分组
+        for j in range(max_weight+1):   #遍历每个容量，即权值
+            for k in range(c):    #遍历当前分组种可选的物品,即路径
+                w = getw(weight[i][k])
+                if (j >= w) :
+                    if(dp[i][j]>dp[i-1][j-w]+constraint[i][k]):
+                        dp[i][j]=dp[i-1][j-w]+constraint[i][k]
+                        pre[i][j]=j-w  #dp[i][j]由dp[i-1][j-w]转移过来，所以前驱是(i-1,j-w)
+                        chose[i][j]=k  #选择了第k个物品
+                if i==n-1:
+                    if dp[i][j]<=FLOPS and j>ans:
+                        ans=j
+                        endk=k
+    path = []
+    path.append(endk)
+    nowj=ans
+    nownode=n-1
+    while(pre[nownode][nowj]!=-1):  #根据记录的前驱不断回溯找到每个分组选择了哪个物品，即每个节点选择了哪条边
+        nowj=pre[nownode][nowj]
+        nownode-=1
+        # print(dp[nownode][nowj])
+        # print(chose[nownode][nowj])
+        path.append(chose[nownode][nowj])
+
+    path = path[::-1]
+    # print('max_weight:',ans)
+    # print('path:',path)
+    return path
+
+
+def get_MB_network(dir_name, flops_constraint=600):
+    flops_constraint = flops_constraint
+    flops_list = json.load(open(os.path.join(dir_name, 'flops.json')))
+    super_net = json.load(open(os.path.join(dir_name, 'supernet.json')))
+    prob = np.load(os.path.join(dir_name, 'probability.npy'))
+    total_flops = 0
+    total_flops += (flops_list['first_conv_flpos'] + flops_list['feature_mix_layer_flops'] +
+                    flops_list['classifier_flops'] + flops_list['block_flops'][0][0])
+    total_flops = total_flops / 1000000.
+    block_flops = np.array(flops_list['block_flops'][1:])
+    assert block_flops.shape[0] == prob.shape[0]
+    path = get_path(prob, block_flops, flops_constraint - total_flops)
+    _net = copy.deepcopy(super_net)
+    assert len(path) == len(_net['blocks']) -1
+    for i in range(len(path)):
+        _net['blocks'][i+1]['mobile_inverted_conv'] = \
+            _net['blocks'][i+1]['mobile_inverted_conv']['selection'][path[i]]
+    save_path = os.path.join(dir_name, str(flops_constraint) + '.json')
+    json.dump(_net, open(save_path, 'a+'))
+
+
+# if __name__ == '__main__':
+#     get_MB_network('/userhome/project/Auto_NAS_V2/experiment/dynamic_SNG_V3/'
+#                    'ofa__epochs_200_data_split_10_warm_up_epochs_0_pruning_step_3_Tue_Jan_21_13:24:28_2020')

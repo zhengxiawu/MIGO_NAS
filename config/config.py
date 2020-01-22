@@ -124,3 +124,6 @@ class SearchConfig(BaseConfig):
                 '5x5_MBConv3', '5x5_MBConv6',
                 '7x7_MBConv3', '7x7_MBConv6',
             ]
+        self.network_info_path = os.path.join(self.path, 'network_info')
+        os.mkdir(self.path)
+        os.mkdir(self.network_info_path)

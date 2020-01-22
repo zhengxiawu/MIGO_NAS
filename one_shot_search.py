@@ -14,6 +14,7 @@ from search_algorithm import Category_MDENAS, Category_DDPNAS, Category_SNG, Cat
 from utils import genotypes
 import random
 import json
+from network_generator import *
 
 
 config = SearchConfig()
@@ -69,11 +70,11 @@ def main():
         total_edges = len(model.blocks) - 1
         num_ops = len(config.conv_candidates) + 1
         model = model.to(device)
-        super_net_config_path = os.path.join(config.path, 'supernet.json')
+        super_net_config_path = os.path.join(config.network_info_path, 'supernet.json')
         super_net_config = model.config
         logger.info("Saving search supernet to {}".format(super_net_config_path))
         json.dump(super_net_config, open(super_net_config_path, 'a+'))
-        flops_path = os.path.join(config.path, 'flops.json')
+        flops_path = os.path.join(config.network_info_path, 'flops.json')
         flops_ = model.flops_counter_per_layer(input_size=[1, input_channels, input_size, input_size])
         logger.info("Saving flops to {}".format(flops_path))
         json.dump(flops_, open(flops_path, 'a+'))
@@ -189,7 +190,12 @@ def main():
     logger.info("Final best Prec@1 = {:.4%}".format(best_top1))
     logger.info("Best Genotype = {}".format(best_genotype))
     logger.info("Training is done, saving the probability")
-    np.save(os.path.join(config.path, 'probability.npy'), distribution_optimizer.p_model.theta)
+    np.save(os.path.join(config.network_info_path, 'probability.npy'), distribution_optimizer.p_model.theta)
+    if config.search_space in ['proxyless', 'ofa', 'google']:
+        logger.info("Generate the network config with 600M, 400M, 200M FLOPS")
+        for i in [200, 400, 600]:
+            get_MB_network(config.network_info_path, flops_constraint=i)
+    logger.info("Done")
 
 
 def train(train_loader, valid_loader, model, w_optim, lr, epoch, sample, net_crit):
