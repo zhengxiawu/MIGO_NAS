@@ -149,8 +149,7 @@ def getw(w):
     return int(w*100)
 
 
-def get_path(weight, constraint, FLOPS, unit = 1000.*1000.):
-    FLOPS *= unit
+def get_path(weight, constraint, FLOPS):
     # n=20
     # weight=np.array([np.random.rand(8) for i in range(n)])
     # constraint=np.array([np.random.rand(8) for i in range(n)])
@@ -164,7 +163,7 @@ def get_path(weight, constraint, FLOPS, unit = 1000.*1000.):
         max_weight += int(np.max(weight[i])*100)  #保留小数点后两位
     # print('max_weight:', max_weight)      #weigth最大可能取的值，作为状态的上限
 
-    dp = [[FLOPS*10 for i in range(max_weight+5)] for i in range(n)]
+    dp = [[FLOPS * 10 for i in range(max_weight+5)] for i in range(n)]
     #定义dp[n][max_weight] dp[i][j]表示第i个节点，在权值和为j的情况下，能取到的最小的限制值
     pre = np.zeros((n, max_weight+5), int)   #记录pre[i][j]的前驱节点，是由上个节点哪个状态(j)转移到的
     chose = np.zeros((n, max_weight+5), int)   #记录dp[i][j]这个状态在节点i是选择了哪条路径
@@ -214,9 +213,10 @@ def get_MB_network(dir_name, flops_constraint=600):
     total_flops = 0
     total_flops += (flops_list['first_conv_flpos'] + flops_list['feature_mix_layer_flops'] +
                     flops_list['classifier_flops'] + flops_list['block_flops'][0][0])
-    total_flops = total_flops / 1000000.
+    total_flops = total_flops
     block_flops = np.array(flops_list['block_flops'][1:])
     assert block_flops.shape[0] == prob.shape[0]
+    # print(prob)
     path = get_path(prob, block_flops, flops_constraint - total_flops)
     _net = copy.deepcopy(super_net)
     assert len(path) == len(_net['blocks']) -1
@@ -225,8 +225,12 @@ def get_MB_network(dir_name, flops_constraint=600):
             _net['blocks'][i+1]['mobile_inverted_conv']['selection'][path[i]]
     save_path = os.path.join(dir_name, str(flops_constraint) + '.json')
     json.dump(_net, open(save_path, 'a+'))
+    return path
 
 
-# if __name__ == '__main__':
-#     get_MB_network('/userhome/project/Auto_NAS_V2/experiment/dynamic_SNG_V3/'
-#                    'ofa__epochs_200_data_split_10_warm_up_epochs_0_pruning_step_3_Tue_Jan_21_13:24:28_2020')
+if __name__ == '__main__':
+    for i in [400, 500, 600]:
+        a = get_MB_network('/userhome/project/Auto_NAS_V2/experiment/dynamic_SNG_V3/'
+                           'ofa__epochs_200_data_split_10_warm_up_epochs_0_pruning_step_3_Wed_Jan_22_11:52:11_2020/'
+                           'network_info', i)
+        print(a)

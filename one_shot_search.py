@@ -75,7 +75,7 @@ def main():
         logger.info("Saving search supernet to {}".format(super_net_config_path))
         json.dump(super_net_config, open(super_net_config_path, 'a+'))
         flops_path = os.path.join(config.network_info_path, 'flops.json')
-        flops_ = model.flops_counter_per_layer(input_size=[1, input_channels, input_size, input_size])
+        flops_ = model.flops_counter_per_layer(input_size=[1, 3, 224, 224])
         logger.info("Saving flops to {}".format(flops_path))
         json.dump(flops_, open(flops_path, 'a+'))
     else:
@@ -194,7 +194,8 @@ def main():
     if config.search_space in ['proxyless', 'ofa', 'google']:
         logger.info("Generate the network config with 600M, 400M, 200M FLOPS")
         for i in [200, 400, 600]:
-            get_MB_network(config.network_info_path, flops_constraint=i)
+            path = get_MB_network(config.network_info_path, flops_constraint=i)
+            logger.info("FLOPS {}M: {}".format(str(i), str(path)))
     logger.info("Done")
 
 
