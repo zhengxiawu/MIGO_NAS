@@ -98,10 +98,14 @@ class SearchConfig(BaseConfig):
         args = parser.parse_args()
         super().__init__(**vars(args))
         time_str = time.asctime(time.localtime()).replace(' ', '_')
-        name_componment = [self.search_space, self.sub_name,
+        name_componment = [self.search_space,
+                           self.sub_name,
+                           'dataset_' + str(self.dataset),
+                           'width_multi_' + str(self.width_mult),
                            'epochs_' + str(self.epochs),
                            'data_split_' + str(self.datset_split),
                            'warm_up_epochs_' + str(self.warm_up_epochs),
+                           'lr_' + str(self.w_lr),
                            ]
         if 'dynamic' in self.name:
             name_componment += ['pruning_step_' + str(self.pruning_step)]

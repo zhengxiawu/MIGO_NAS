@@ -193,7 +193,7 @@ def main():
     np.save(os.path.join(config.network_info_path, 'probability.npy'), distribution_optimizer.p_model.theta)
     if config.search_space in ['proxyless', 'ofa', 'google']:
         logger.info("Generate the network config with 600M, 400M, 200M FLOPS")
-        for i in [200, 400, 600]:
+        for i in [100, 200, 300, 400, 500, 600]:
             path = get_MB_network(config.network_info_path, flops_constraint=i)
             logger.info("FLOPS {}M: {}".format(str(i), str(path)))
     logger.info("Done")
