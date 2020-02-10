@@ -17,6 +17,13 @@ import json
 from network_generator import *
 
 
+def mkdir(path):
+    if os.path.isdir(path):
+        return
+    else:
+        os.mkdir(path)
+
+
 config = SearchConfig()
 
 device = torch.device("cuda")
@@ -24,6 +31,8 @@ device = torch.device("cuda")
 # tensorboard
 writer = SummaryWriter(logdir=os.path.join(config.path, "tb"))
 writer.add_text('config', config.as_markdown(), 0)
+mkdir(config.path)
+mkdir(config.network_info_path)
 
 logger = utils.get_logger(os.path.join(config.path, "logger.log"))
 config.print_params(logger.info)
@@ -88,6 +97,8 @@ def main():
     n_train = len(train_data)
     split = n_train - int(n_train / config.datset_split)
     indices = list(range(n_train))
+    # shuffle data
+    np.random.shuffle(indices)
     train_sampler = torch.utils.data.sampler.SubsetRandomSampler(indices[:split])
     valid_sampler = torch.utils.data.sampler.SubsetRandomSampler(indices[split:])
     train_loader = torch.utils.data.DataLoader(train_data,
@@ -140,7 +151,7 @@ def main():
         array_sample = np.array(array_sample)
         for i in range(num_ops):
             sample = np.transpose(array_sample[:, i])
-            train(train_loader, valid_loader, model, w_optim, lr, epoch, sample)
+            train(train_loader, valid_loader, model, w_optim, lr, epoch, sample, net_crit)
     logger.info("end warm up training")
     logger.info("start One shot searching")
     best_top1 = 0.
@@ -160,13 +171,14 @@ def main():
         cur_step = (epoch+1) * len(train_loader)
         top1 = validate(valid_loader, model, epoch, cur_step, sample, net_crit)
         # information recoder
-        if 'dynamic' or 'DDPNAS' in config.name:
-            if epoch >= lr_flag * config.w_lr_step and len(distribution_optimizer.sample_index[0]) == 0:
-                utils.step_learning_rate(w_optim)
-                lr_flag += 1
-        else:
-            if epoch % config.w_lr_step == 0 and epoch > 0:
-                utils.step_learning_rate(w_optim)
+        if lr > config.w_lr_min:
+            if 'dynamic' or 'DDPNAS' in config.name:
+                if epoch >= lr_flag * config.w_lr_step and len(distribution_optimizer.sample_index[0]) == 0:
+                    utils.step_learning_rate(w_optim)
+                    lr_flag += 1
+            else:
+                if epoch % config.w_lr_step == 0 and epoch > 0:
+                    utils.step_learning_rate(w_optim)
         distribution_optimizer.record_information(sample, top1)
         distribution_optimizer.update()
         # log

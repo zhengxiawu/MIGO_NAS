@@ -24,7 +24,7 @@ def get_data(dataset, data_path, cutout_length, validation, image_size=None):
     elif dataset == 'fashionmnist':
         dset_cls = dset.FashionMNIST
         n_classes = 10
-    elif dataset == 'imagenet':
+    elif 'imagenet' in dataset:
         dset_cls = dset.ImageFolder
         n_classes = 1000
     else:
@@ -39,8 +39,15 @@ def get_data(dataset, data_path, cutout_length, validation, image_size=None):
         trn_data = dset_cls(root=data_path, train=True, download=True, transform=trn_transform)
 
     # assuming shape is NHW or NHWC
-    if dataset == 'imagenet':
-        shape = (len(trn_data.imgs), 224, 224, 3)
+    if 'imagenet' in dataset:
+        if dataset == 'imagenet':
+            shape = (len(trn_data.imgs), 224, 224, 3)
+        elif dataset == 'imagenet112':
+            shape = (len(trn_data.imgs), 112, 112, 3)
+        elif dataset == 'imagenet56':
+            shape = (len(trn_data.imgs), 56, 56, 3)
+        else:
+            raise NotImplementedError
     else:
         if hasattr(trn_data, 'data'):
             shape = trn_data.data.shape

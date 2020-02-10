@@ -60,6 +60,7 @@ def _parser(parser):
     parser.add_argument('--dropout', type=float, default=0)
     # training parser
     parser.add_argument('--w_lr', type=float, default=0.1, help='lr for weights')
+    parser.add_argument('--w_lr_min', type=float, default=0.0001, help='minimum learning rate')
     parser.add_argument('--w_lr_step', type=int, default=40, help='lr for weights')
     parser.add_argument('--w_lr_gamma', type=float, default=0.1, help='minimum lr for weights')
     parser.add_argument('--w_momentum', type=float, default=0.9, help='momentum for weights')
@@ -67,7 +68,7 @@ def _parser(parser):
                         help='weight decay for weights')
     parser.add_argument('--w_grad_clip', type=float, default=5.,
                         help='gradient clipping for weights')
-    parser.add_argument('--print_freq', type=int, default=50, help='print frequency')
+    parser.add_argument('--print_freq', type=int, default=100, help='print frequency')
     parser.add_argument('--gpus', default='0', help='gpu device ids separated by comma. '
                                                     '`all` indicates use all gpus.')
     parser.add_argument('--epochs', type=int, default=200, help='# of training epochs')
@@ -98,9 +99,7 @@ class SearchConfig(BaseConfig):
         args = parser.parse_args()
         super().__init__(**vars(args))
         time_str = time.asctime(time.localtime()).replace(' ', '_')
-        name_componment = [self.search_space,
-                           self.sub_name,
-                           'dataset_' + str(self.dataset),
+        name_componment = [
                            'width_multi_' + str(self.width_mult),
                            'epochs_' + str(self.epochs),
                            'data_split_' + str(self.datset_split),
@@ -117,8 +116,9 @@ class SearchConfig(BaseConfig):
         for i in name_componment:
             name_str += i + '_'
         name_str += time_str
-        self.path = os.path.join('experiment', self.name,
-                                 name_str)
+        self.path = os.path.join('experiments', self.name,
+                                 self.search_space,
+                                 self.dataset, name_str)
         # self.plot_path = os.path.join(self.path, 'plots')
         self.gpus = parse_gpus(self.gpus)
         self.image_size = None if self.image_size == 0 else self.image_size
@@ -129,5 +129,3 @@ class SearchConfig(BaseConfig):
                 '7x7_MBConv3', '7x7_MBConv6',
             ]
         self.network_info_path = os.path.join(self.path, 'network_info')
-        os.mkdir(self.path)
-        os.mkdir(self.network_info_path)
