@@ -33,7 +33,7 @@ def get_data(dataset, data_path, cutout_length, validation, image_size=None):
     trn_transform, val_transform = preproc.data_transforms(dataset, cutout_length)
     if image_size is not None:
         trn_transform.transforms.append(transforms.Resize(image_size))
-    if dataset == 'imagenet':
+    if 'imagenet' in dataset:
         trn_data = dset_cls(root=os.path.join(data_path, 'train'), transform=trn_transform)
     else:
         trn_data = dset_cls(root=data_path, train=True, download=True, transform=trn_transform)
