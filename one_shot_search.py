@@ -10,7 +10,7 @@ from model.darts_cnn import SelectSearchCNN
 from model.mb_v3_cnn import get_super_net
 from datasets import get_data
 from search_algorithm import Category_MDENAS, Category_DDPNAS, Category_SNG, Category_ASNG, \
-    Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3
+    Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3, Category_DDPNAS_V2
 from utils import genotypes
 import random
 import json
@@ -117,7 +117,10 @@ def main():
             [num_ops]*total_edges, learning_rate=config.theta_lr)
     elif config.name == 'DDPNAS':
         distribution_optimizer = Category_DDPNAS.CategoricalDDPNAS(
-            [num_ops]*total_edges, 3)
+            [num_ops]*total_edges, config.pruning_step)
+    elif config.name == 'DDPNAS_V2':
+        distribution_optimizer = Category_DDPNAS_V2.CategoricalDDPNASV2(
+            [num_ops]*total_edges, config.pruning_step)
     elif config.name == 'SNG':
         distribution_optimizer = Category_SNG.SNG(
             [num_ops]*total_edges)
@@ -208,6 +211,8 @@ def main():
         for i in [100, 200, 300, 400, 500, 600]:
             path = get_MB_network(config.network_info_path, flops_constraint=i)
             logger.info("FLOPS {}M: {}".format(str(i), str(path)))
+    elif config.search_space in ['darts']:
+        get_gene_by_prob(config.network_info_path, distribution_optimizer.p_model.theta)
     logger.info("Done")
 
 

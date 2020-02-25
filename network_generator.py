@@ -116,6 +116,24 @@ def get_network(probability, reduce_constrain=True, height_constraint=2, skip_co
                               reduce=best_reduce_gene, reduce_concat=concat)
 
 
+def get_gene_by_prob(path, prob):
+    height_constraints = [1, 2, 3, 4]
+    skip_connection_constraints = [2, 4, 6, 8]
+    reductions = [True, False]
+    for _height_constraint in height_constraints:
+        for _skip_connection_constraint in skip_connection_constraints:
+            for _reduction in reductions:
+                save_text_name = str(_height_constraint) + '_' + str(_skip_connection_constraint) + \
+                                 '_' + str(_reduction) + '.txt'
+                print(save_text_name)
+                file = open(os.path.join(path, 'txt', save_text_name), 'w+')
+                gen = get_network(prob, reduce_constrain=_reduction,
+                                  height_constraint=_height_constraint,
+                                  skip_connection_constraint=_skip_connection_constraint)
+                file.write(str(gen) + "\n")
+                file.close()
+
+
 def get_gene_by_dir(dir_name):
     # dir_name = '/userhome/project/DDPNAS_V2/experiment'
     dirs = os.listdir(dir_name)
