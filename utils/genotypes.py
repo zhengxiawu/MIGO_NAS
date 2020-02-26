@@ -140,3 +140,12 @@ def parse_numpy(alpha, k):
         gene.append(node_gene)
 
     return gene
+
+
+def parse_graph_and_operation(graph, operation_list):
+    gene = []
+    for node_index in range(len(graph)):
+        node_gene = [(PRIMITIVES[operation_list[node_index][0]], graph[node_index][0])]
+        node_gene.append((PRIMITIVES[operation_list[node_index][1]], graph[node_index][1]))
+        gene.append(node_gene)
+    return gene

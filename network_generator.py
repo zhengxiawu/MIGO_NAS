@@ -126,7 +126,7 @@ def get_gene_by_prob(path, prob):
                 save_text_name = str(_height_constraint) + '_' + str(_skip_connection_constraint) + \
                                  '_' + str(_reduction) + '.txt'
                 print(save_text_name)
-                file = open(os.path.join(path, 'txt', save_text_name), 'w+')
+                file = open(os.path.join(path, save_text_name), 'w+')
                 gen = get_network(prob, reduce_constrain=_reduction,
                                   height_constraint=_height_constraint,
                                   skip_connection_constraint=_skip_connection_constraint)
@@ -247,8 +247,11 @@ def get_MB_network(dir_name, flops_constraint=600):
 
 
 if __name__ == '__main__':
-    for i in [400, 500, 600]:
-        a = get_MB_network('/userhome/project/Auto_NAS_V2/experiment/dynamic_SNG_V3/'
-                           'ofa__epochs_200_data_split_10_warm_up_epochs_0_pruning_step_3_Wed_Jan_22_11:52:11_2020/'
-                           'network_info', i)
-        print(a)
+    network_info_path = '/userhome/project/Auto_NAS_V2/experiments/DDPNAS_V2/darts/cifar10/width_multi_0.0_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.1_init_channels16_layers8_n_nodes4_Tue_Feb_25_09:17:17_2020/network_info'
+    theta = np.load(os.path.join(network_info_path, 'probability.npy'))
+    get_gene_by_prob(network_info_path, theta)
+    # for i in [400, 500, 600]:
+    #     a = get_MB_network('/userhome/project/Auto_NAS_V2/experiment/dynamic_SNG_V3/'
+    #                        'ofa__epochs_200_data_split_10_warm_up_epochs_0_pruning_step_3_Wed_Jan_22_11:52:11_2020/'
+    #                        'network_info', i)
+    #     print(a)

@@ -211,7 +211,8 @@ def main():
         for i in [100, 200, 300, 400, 500, 600]:
             path = get_MB_network(config.network_info_path, flops_constraint=i)
             logger.info("FLOPS {}M: {}".format(str(i), str(path)))
-    elif config.search_space in ['darts']:
+    elif config.search_space == 'darts':
+        logger.info("Generate the network config with different constraints")
         get_gene_by_prob(config.network_info_path, distribution_optimizer.p_model.theta)
     logger.info("Done")
 

@@ -106,7 +106,7 @@ class SearchConfig(BaseConfig):
                            'warm_up_epochs_' + str(self.warm_up_epochs),
                            'lr_' + str(self.w_lr),
                            ]
-        if 'dynamic' in self.name:
+        if 'dynamic' in self.name or 'DDPNAS' in self.name:
             name_componment += ['pruning_step_' + str(self.pruning_step)]
         if self.search_space == 'darts':
             name_componment += ['init_channels' + str(self.init_channels),
