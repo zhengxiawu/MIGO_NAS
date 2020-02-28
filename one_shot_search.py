@@ -10,7 +10,8 @@ from model.darts_cnn import SelectSearchCNN
 from model.mb_v3_cnn import get_super_net
 from datasets import get_data
 from search_algorithm import Category_MDENAS, Category_DDPNAS, Category_SNG, Category_ASNG, \
-    Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3, Category_DDPNAS_V2
+    Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3, Category_DDPNAS_V2, \
+    Category_DDPNAS_V3
 from utils import genotypes
 import random
 import json
@@ -121,6 +122,9 @@ def main():
     elif config.name == 'DDPNAS_V2':
         distribution_optimizer = Category_DDPNAS_V2.CategoricalDDPNASV2(
             [num_ops]*total_edges, config.pruning_step)
+    elif config.name == 'DDPNAS_V2':
+        distribution_optimizer = Category_DDPNAS_V3.CategoricalDDPNASV3(
+            [num_ops] * total_edges, config.pruning_step, gamma=config.gamma)
     elif config.name == 'SNG':
         distribution_optimizer = Category_SNG.SNG(
             [num_ops]*total_edges)

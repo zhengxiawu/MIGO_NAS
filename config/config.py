@@ -79,6 +79,7 @@ def _parser(parser):
     parser.add_argument('--deterministic', type=bool, default=True, help='cudnn switch')
     # optimizer parser
     parser.add_argument('--pruning_step', type=int, default=3)
+    parser.add_argument('--gamma', type=float, default=0.8)
 
 
 class SearchConfig(BaseConfig):

@@ -1,13 +1,18 @@
 import numpy as np
 import tqdm
 from search_algorithm import Category_DDPNAS, Category_MDENAS, Category_SNG, \
-    Category_ASNG, Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3
+    Category_ASNG, Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3, \
+    Category_DDPNAS_V3, Category_DDPNAS_V2
 from test.search_algorithm_test_function import SumCategoryTestFunction
 
 
 def get_optimizer(name, category):
     if name == 'DDPNAS':
-        return Category_DDPNAS.CategoricalDDPNAS(category, 10)
+        return Category_DDPNAS.CategoricalDDPNAS(category, 3)
+    elif name == 'DDPNAS_V2':
+        return Category_DDPNAS_V2.CategoricalDDPNASV2(category, 3)
+    elif name == 'DDPNAS_V3':
+        return Category_DDPNAS_V3.CategoricalDDPNASV3(category, 3)
     elif name == 'MDENAS':
         return Category_MDENAS.CategoricalMDENAS(category, 0.01)
     elif name == 'SNG':
@@ -20,7 +25,7 @@ def get_optimizer(name, category):
         return Category_Dynamic_SNG.Dynamic_SNG(categories=category, step=10,
                                                 pruning=False, sample_with_prob=False)
     elif name == 'dynamic_SNG_V3':
-        return Category_Dynamic_SNG_V3.Dynamic_SNG(categories=category, step=10,
+        return Category_Dynamic_SNG_V3.Dynamic_SNG(categories=category, step=3,
                                                    pruning=True, sample_with_prob=False,
                                                    utility_function='log', utility_function_hyper=0.4,
                                                    momentum=True, gamma=0.9)

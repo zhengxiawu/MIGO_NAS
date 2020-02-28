@@ -5,6 +5,8 @@ import time
 import shutil
 import glob
 import shutil
+import numpy as np
+import pdb
 
 # walk_dir = sys.argv[1]
 #
@@ -101,9 +103,48 @@ def get_network():
                 shutil.copy(_network_path, dst_network_path)
 
 
+def get_training_time():
+    from datetime import datetime
+    save_dir = '/userhome/project/Auto_NAS_V2/experiments/old_0226/DDPNAS_V2/darts/cifar10'
+    sub_directorys = glob.glob(save_dir + "/*/")
+    sub_directorys.sort()
+    print(sub_directorys)
+    training_time = []
+    for sub_dir in sub_directorys:
+        file_name = os.path.join(sub_dir, 'logger.log')
+        fileHandle = open(file_name, "r")
+        lineList = fileHandle.readlines()
+        start_time = lineList[0][:-4]
+        end_time = lineList[-1][:-8]
+        # pdb.set_trace()
+        time_delta = datetime.strptime(end_time, "%m/%d %I:%M:%S %p") - \
+                     datetime.strptime(start_time, "%m/%d %I:%M:%S %p")
+        training_time.append(time_delta.seconds / 3600. + time_delta.days * 24)
+    print(training_time)
+    return training_time
+
+
+def get_training_result():
+    save_dir = '/userhome/project/pt.darts/experiment/*/*/*.log'
+    sub_directorys = glob.glob(save_dir)
+    sub_directorys.sort()
+    for sub_dir in sub_directorys:
+        if 'pruning_step' in sub_dir and 'BN' not in sub_dir:
+            file_name = os.path.join(sub_dir)
+            fileHandle = open(file_name, "r")
+            lineList = fileHandle.readlines()
+            print(lineList[-2])
+            print(sub_dir)
+
+
 if __name__ == '__main__':
-    pass
-    get_network()
+    get_training_result()
+    # get_network()
+    # times = get_training_time()
+    # for i in range(int(len(times)/4)):
+    #     times_array = np.array(times[0+i*4:(i+1)*4])
+    #     print(np.mean(times_array))
+    #     print(np.var(times_array))
     # folder_clean(walk_dir, True)
     # read_result(walk_dir)
     # result detect
