@@ -263,7 +263,9 @@ def validate(valid_loader, model, epoch, cur_step, sample, net_crit):
     top5 = utils.AverageMeter()
     losses = utils.AverageMeter()
 
-    model.eval()
+    # using model train instead
+    # model.eval()
+    model.train()
 
     with torch.no_grad():
         for step, (X, y) in enumerate(valid_loader):
