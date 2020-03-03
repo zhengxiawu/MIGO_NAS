@@ -1,11 +1,15 @@
 import os
 import sys
+sys.path.append('/userhome/project/Auto_NAS_V2')
 from datetime import datetime
 import time
 import shutil
 import glob
 import shutil
+import pprint
 import numpy as np
+from network_generator import get_gene_with_skip_connection_constraints, \
+    get_gene_by_prob, get_MB_network
 import pdb
 
 # walk_dir = sys.argv[1]
@@ -128,17 +132,51 @@ def get_training_result():
     save_dir = '/userhome/project/pt.darts/experiment/*/*/*.log'
     sub_directorys = glob.glob(save_dir)
     sub_directorys.sort()
+    result = []
     for sub_dir in sub_directorys:
-        if 'pruning_step' in sub_dir and 'BN' not in sub_dir:
+        if 'BN_pruning_step' in sub_dir:
             file_name = os.path.join(sub_dir)
             fileHandle = open(file_name, "r")
             lineList = fileHandle.readlines()
-            print(lineList[-2])
-            print(sub_dir)
+            accuracy = lineList[-2]
+            result.append(float(accuracy[-10:-4]))
+    print(result)
+    print(len(result))
+    for i in range(9):
+        print(np.mean(np.array(result[i*4:(i+1)*4])))
+        print(np.var(np.array(result[i * 4:(i + 1) * 4])))
+
+
+def get_network_by_constraints():
+    save_dir = '/userhome/project/Auto_NAS_V2/experiments/DDPNAS_V3/darts/cifar10/*pruning_step_3_gamma_0.9*/' \
+               'network_info/probability.npy'
+    sub_directorys = glob.glob(save_dir)
+    sub_directorys.sort()
+    gen_dict = {}
+    flag = 0
+    for i in sub_directorys:
+        flag += 1
+        _this_prob = np.load(i)
+        _this_prob = np.delete(_this_prob, 7, 1)
+        # pdb.set_trace()
+        for j in range(5):
+            constraint = j + 2
+            gene = get_gene_with_skip_connection_constraints(_this_prob, skip_constraint=constraint)
+            key = str(flag) + '_constraint_' + str(constraint)
+            gen_dict[key] = str(gene)
+    pprint.pprint(gen_dict)
 
 
 if __name__ == '__main__':
-    get_training_result()
+    # config_path = '/userhome/project/Auto_NAS_V2/experiments/DDPNAS_V3/ofa/imagenet56/width_multi_1.2_epochs' \
+    #               '_1000_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3_gamma_0.8_Sat_Feb_29_08:02:38_2020/' \
+    #               'network_info'
+    # for i in [100, 200, 300, 400, 500, 600]:
+    #     get_MB_network(config_path, flops_constraint=i)
+    # prob = np.load(os.path.join(config_path, 'probability.npy'))
+    # get_gene_by_prob(config_path, prob)
+    # get_training_result()
+    # get_network_by_constraints()
     # get_network()
     # times = get_training_time()
     # for i in range(int(len(times)/4)):

@@ -122,7 +122,7 @@ def main():
     elif config.name == 'DDPNAS_V2':
         distribution_optimizer = Category_DDPNAS_V2.CategoricalDDPNASV2(
             [num_ops]*total_edges, config.pruning_step)
-    elif config.name == 'DDPNAS_V2':
+    elif config.name == 'DDPNAS_V3':
         distribution_optimizer = Category_DDPNAS_V3.CategoricalDDPNASV3(
             [num_ops] * total_edges, config.pruning_step, gamma=config.gamma)
     elif config.name == 'SNG':

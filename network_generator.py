@@ -51,7 +51,7 @@ def get_best_gene(height_constraint_graph, _skip_connection_selection_list, max_
                 best_expectation = expectation
                 # generate the gene
                 best_gene = genotypes.parse_graph_and_operation(graph, graph_operation_index)
-    return best_gene
+    return best_gene, best_expectation
 
 
 def get_network(probability, reduce_constrain=True, height_constraint=2, skip_connection_constraint=2):
@@ -100,20 +100,23 @@ def get_network(probability, reduce_constrain=True, height_constraint=2, skip_co
     prob_norm = utils.darts_weight_unpack(probability[0:n_edges], n_node)
     prob_reduce = utils.darts_weight_unpack(probability[n_edges:], n_node)
     max_indexes_norm = un_pack_list(max_indexs[0: n_edges])
-    max_indexes_reduce = un_pack_list(max_indexs[n_edges: ])
+    max_indexes_reduce = un_pack_list(max_indexs[n_edges:])
     _skip_connection_selection_list = list(itertools.combinations(list(range(n_node * 2)), skip_connection_constraint))
     # norm cell
-    best_norm_gene = get_best_gene(height_constraint_graph, _skip_connection_selection_list,
-                                   max_indexes_norm, prob_norm)
+    best_norm_gene, best_norm_expectation = get_best_gene(height_constraint_graph, _skip_connection_selection_list,
+                                                          max_indexes_norm, prob_norm)
     if reduce_constrain:
-        best_reduce_gene = get_best_gene(height_constraint_graph,
-                                         _skip_connection_selection_list,
-                                         max_indexes_reduce, prob_reduce)
+        best_reduce_gene, best_reduction_expectation = get_best_gene(height_constraint_graph,
+                                                                     _skip_connection_selection_list,
+                                                                     max_indexes_reduce, prob_reduce)
+        best_expectation = (best_norm_expectation + best_reduction_expectation) / 2.
     else:
         best_reduce_gene = genotypes.parse_numpy(prob_reduce, k=2)
+        best_expectation = best_norm_expectation
     concat = range(2, 2 + 4)  # concat all intermediate nodes
-    return genotypes.Genotype(normal=best_norm_gene, normal_concat=concat,
-                              reduce=best_reduce_gene, reduce_concat=concat)
+    best_geno = genotypes.Genotype(normal=best_norm_gene, normal_concat=concat,
+                                   reduce=best_reduce_gene, reduce_concat=concat)
+    return best_geno, best_expectation
 
 
 def get_gene_by_prob(path, prob):
@@ -127,11 +130,25 @@ def get_gene_by_prob(path, prob):
                                  '_' + str(_reduction) + '.txt'
                 print(save_text_name)
                 file = open(os.path.join(path, save_text_name), 'w+')
-                gen = get_network(prob, reduce_constrain=_reduction,
-                                  height_constraint=_height_constraint,
-                                  skip_connection_constraint=_skip_connection_constraint)
+                gen, _ = get_network(prob, reduce_constrain=_reduction,
+                                     height_constraint=_height_constraint,
+                                     skip_connection_constraint=_skip_connection_constraint)
                 file.write(str(gen) + "\n")
                 file.close()
+
+
+def get_gene_with_skip_connection_constraints(prob, skip_constraint=2, reduction=False):
+    height_constraints = [1, 2, 3, 4]
+    best_expectation = 0.
+    best_gene = None
+    for _height_constraint in height_constraints:
+        gen, current_expectation = get_network(prob, reduce_constrain=reduction,
+                                               height_constraint=_height_constraint,
+                                               skip_connection_constraint=skip_constraint)
+        if current_expectation > best_expectation:
+            best_expectation = current_expectation
+            best_gene = gen
+    return best_gene
 
 
 def get_gene_by_dir(dir_name):

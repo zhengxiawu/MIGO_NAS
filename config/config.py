@@ -108,7 +108,8 @@ class SearchConfig(BaseConfig):
                            'lr_' + str(self.w_lr),
                            ]
         if 'dynamic' in self.name or 'DDPNAS' in self.name:
-            name_componment += ['pruning_step_' + str(self.pruning_step)]
+            name_componment += ['pruning_step_' + str(self.pruning_step),
+                                'gamma_' + str(self.gamma)]
         if self.search_space == 'darts':
             name_componment += ['init_channels' + str(self.init_channels),
                                 'layers' + str(self.layers),
