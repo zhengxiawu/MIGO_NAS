@@ -1,6 +1,3 @@
-'''
-writing by yuhang chen
-'''
 import numpy as np
 
 

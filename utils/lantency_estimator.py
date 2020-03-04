@@ -1,7 +1,3 @@
-# ProxylessNAS: Direct Neural Architecture Search on Target Task and Hardware
-# Han Cai, Ligeng Zhu, Song Han
-# International Conference on Learning Representations (ICLR), 2019.
-
 import yaml
 import os
 import sys
