@@ -209,6 +209,8 @@ def main():
     logger.info("Final best Prec@1 = {:.4%}".format(best_top1))
     logger.info("Best Genotype = {}".format(best_genotype))
     logger.info("Training is done, saving the probability")
+    best_gene_constrain_4 = get_gene_with_skip_connection_constraints(distribution_optimizer.p_model.theta, skip_constraint=4)
+    logger.info("Best Genotype with N constraint 4 = {}".format(best_gene_constrain_4))
     np.save(os.path.join(config.network_info_path, 'probability.npy'), distribution_optimizer.p_model.theta)
     if config.search_space in ['proxyless', 'ofa', 'google']:
         logger.info("Generate the network config with 600M, 400M, 200M FLOPS")
