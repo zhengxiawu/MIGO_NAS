@@ -157,7 +157,7 @@ def get_network_by_constraints():
     for i in sub_directorys:
         flag += 1
         _this_prob = np.load(i)
-        _this_prob = np.delete(_this_prob, 7, 1)
+        # _this_prob = np.delete(_this_prob, 7, 1)
         # pdb.set_trace()
         for j in range(5):
             constraint = j + 2
@@ -168,6 +168,7 @@ def get_network_by_constraints():
 
 
 if __name__ == '__main__':
+    get_network_by_constraints()
     # config_path = '/userhome/project/Auto_NAS_V2/experiments/DDPNAS_V3/ofa/imagenet56/width_multi_1.2_epochs' \
     #               '_1000_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3_gamma_0.8_Sat_Feb_29_08:02:38_2020/' \
     #               'network_info'
