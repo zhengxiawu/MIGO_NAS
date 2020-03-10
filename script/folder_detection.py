@@ -167,8 +167,24 @@ def get_network_by_constraints():
     pprint.pprint(gen_dict)
 
 
+def get_network_from_different_constraints():
+    method_list = ['dynamic_SNG_V3', 'DDPNAS_V3']
+    for method in method_list:
+        dir_name = '/userhome/project/Auto_NAS_V2/experiments/{}/ofa/imagenet/*/network_info'.format(method)
+        dir_list = glob.glob(dir_name)
+        dir_list.sort()
+        # pprint.pprint(dir_list)
+        for i in dir_list:
+            i_list = i.split('/')
+            for j in [100, 200, 300, 400, 500, 600]:
+                save_name = '{0}_{1}_{2}_{3}_{4}'.format(i_list[5], i_list[6], i_list[7], i_list[8][0:15], str(j))
+                get_MB_network(i, flops_constraint=j, name=save_name)
+                print(save_name)
+
+
 if __name__ == '__main__':
-    get_network_by_constraints()
+    get_network_from_different_constraints()
+    # get_network_by_constraints()
     # config_path = '/userhome/project/Auto_NAS_V2/experiments/DDPNAS_V3/ofa/imagenet56/width_multi_1.2_epochs' \
     #               '_1000_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3_gamma_0.8_Sat_Feb_29_08:02:38_2020/' \
     #               'network_info'

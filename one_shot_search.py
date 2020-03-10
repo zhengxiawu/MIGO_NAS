@@ -213,7 +213,10 @@ def main():
     if config.search_space in ['proxyless', 'ofa', 'google']:
         logger.info("Generate the network config with 600M, 400M, 200M FLOPS")
         for i in [100, 200, 300, 400, 500, 600]:
-            path = get_MB_network(config.network_info_path, flops_constraint=i)
+            flops_save_name = '{0}_{1}_{2}_{3}_{4}'.format(config.name, config.search_space,
+                                                           config.dataset, 'width_multi_' + str(config.width_mult),
+                                                           str(i))
+            path = get_MB_network(config.network_info_path, flops_constraint=i, name=flops_save_name)
             logger.info("FLOPS {}M: {}".format(str(i), str(path)))
     elif config.search_space == 'darts':
         best_gene_constrain_4 = get_gene_with_skip_connection_constraints(distribution_optimizer.p_model.theta,

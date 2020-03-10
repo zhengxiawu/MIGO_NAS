@@ -240,14 +240,19 @@ def get_path(weight, constraint, FLOPS):
     return path
 
 
-def get_MB_network(dir_name, flops_constraint=600):
+def get_MB_network(dir_name, flops_constraint=600, name=None):
     flops_constraint = flops_constraint
+    if not os.path.exists(os.path.join(dir_name, 'probability.npy')):
+        return None
     flops_list = json.load(open(os.path.join(dir_name, 'flops.json')))
     super_net = json.load(open(os.path.join(dir_name, 'supernet.json')))
     prob = np.load(os.path.join(dir_name, 'probability.npy'))
     total_flops = 0
     total_flops += (flops_list['first_conv_flpos'] + flops_list['feature_mix_layer_flops'] +
                     flops_list['classifier_flops'] + flops_list['block_flops'][0][0])
+    pdb.set_trace()
+    if 'final_expand_layer_flops' in flops_list.keys():
+        total_flops += flops_list['final_expand_layer_flops']
     total_flops = total_flops
     block_flops = np.array(flops_list['block_flops'][1:])
     assert block_flops.shape[0] == prob.shape[0]
@@ -258,7 +263,10 @@ def get_MB_network(dir_name, flops_constraint=600):
     for i in range(len(path)):
         _net['blocks'][i+1]['mobile_inverted_conv'] = \
             _net['blocks'][i+1]['mobile_inverted_conv']['selection'][path[i]]
-    save_path = os.path.join(dir_name, str(flops_constraint) + '.json')
+    if name is None:
+        save_path = os.path.join(dir_name, str(flops_constraint) + '.json')
+    else:
+        save_path = os.path.join(dir_name, name + '.json')
     json.dump(_net, open(save_path, 'a+'))
     return path
 
