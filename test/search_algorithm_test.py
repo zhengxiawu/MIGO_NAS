@@ -3,7 +3,7 @@ import tqdm
 from search_algorithm import Category_DDPNAS, Category_MDENAS, Category_SNG, \
     Category_ASNG, Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3, \
     Category_DDPNAS_V3, Category_DDPNAS_V2
-from test.search_algorithm_test_function import SumCategoryTestFunction
+from test.search_algorithm_test_function import SumCategoryTestFunction, EpochSumCategoryTestFunction
 
 
 def get_optimizer(name, category):
@@ -33,14 +33,15 @@ def get_optimizer(name, category):
         raise NotImplementedError
 
 
-category = [10]*10
-test_function = SumCategoryTestFunction(category)
-optimizer_name = 'dynamic_SNG_V3'
+category = [9]*10
+# test_function = SumCategoryTestFunction(category)
+test_function = EpochSumCategoryTestFunction(category, func='rastrigin')
+optimizer_name = 'SNG'
 
 # distribution_optimizer = Category_DDPNAS.CategoricalDDPNAS(category, 3)
 distribution_optimizer = get_optimizer(optimizer_name, category)
-runing_times = 1000
-runing_epochs = 1000
+runing_times = 500
+runing_epochs = 400
 record = {
     'objective': np.zeros([runing_times, runing_epochs]) - 1,
     'l2_distance': np.zeros([runing_times, runing_epochs]) - 1,
