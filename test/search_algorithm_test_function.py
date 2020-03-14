@@ -47,7 +47,7 @@ class SumCategoryTestFunction(TestFunction):
 class EpochSumCategoryTestFunction(TestFunction):
     def __init__(self, category, epoch_func='quad', func='index_sum'):
         assert epoch_func in ['quad', 'linear', 'exp', 'constant']
-        assert func in ['index_sum', 'rastrigin', 'rosenbrock ']
+        assert func in ['index_sum', 'rastrigin', 'rosenbrock']
         self.category = category
         self.epoch_recoder = []
         for i in range(len(self.category)):
@@ -83,7 +83,7 @@ class EpochSumCategoryTestFunction(TestFunction):
         elif self.epoch_func == 'linear':
             epoch = epoch
         elif self.epoch_func == 'quad':
-            epoch *= epoch
+            epoch = epoch ** 5
         elif self.epoch_func == 'constant':
             epoch = np.ones(epoch.shape)
         else:
@@ -97,7 +97,7 @@ class EpochSumCategoryTestFunction(TestFunction):
         else:
             result = rosenbrock_function(sample)
             result *= np.random.choice(epoch)
-        return result
+        return result * self.maxmize
 
     def optimal_value(self):
         if self.func == 'index_sum':

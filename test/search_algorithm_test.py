@@ -12,7 +12,7 @@ def get_optimizer(name, category):
     elif name == 'DDPNAS_V2':
         return Category_DDPNAS_V2.CategoricalDDPNASV2(category, 3)
     elif name == 'DDPNAS_V3':
-        return Category_DDPNAS_V3.CategoricalDDPNASV3(category, 3)
+        return Category_DDPNAS_V3.CategoricalDDPNASV3(category, 4)
     elif name == 'MDENAS':
         return Category_MDENAS.CategoricalMDENAS(category, 0.01)
     elif name == 'SNG':
@@ -25,7 +25,7 @@ def get_optimizer(name, category):
         return Category_Dynamic_SNG.Dynamic_SNG(categories=category, step=10,
                                                 pruning=False, sample_with_prob=False)
     elif name == 'dynamic_SNG_V3':
-        return Category_Dynamic_SNG_V3.Dynamic_SNG(categories=category, step=3,
+        return Category_Dynamic_SNG_V3.Dynamic_SNG(categories=category, step=4,
                                                    pruning=True, sample_with_prob=False,
                                                    utility_function='log', utility_function_hyper=0.4,
                                                    momentum=True, gamma=0.9)
@@ -35,13 +35,15 @@ def get_optimizer(name, category):
 
 category = [9]*10
 # test_function = SumCategoryTestFunction(category)
-test_function = EpochSumCategoryTestFunction(category, func='rastrigin')
+# ['quad', 'linear', 'exp', 'constant']
+# ['index_sum', 'rastrigin', 'rosenbrock ']
+test_function = EpochSumCategoryTestFunction(category, epoch_func='quad', func='rastrigin')
 optimizer_name = 'SNG'
 
 # distribution_optimizer = Category_DDPNAS.CategoricalDDPNAS(category, 3)
 distribution_optimizer = get_optimizer(optimizer_name, category)
 runing_times = 500
-runing_epochs = 400
+runing_epochs = 200
 record = {
     'objective': np.zeros([runing_times, runing_epochs]) - 1,
     'l2_distance': np.zeros([runing_times, runing_epochs]) - 1,
@@ -63,4 +65,5 @@ for i in tqdm.tqdm(range(runing_times)):
 mean_obj = np.mean(record['objective'], axis=0)
 mean_distance = np.mean(record['l2_distance'], axis=0)
 print(mean_distance)
+print(mean_obj)
 pass
