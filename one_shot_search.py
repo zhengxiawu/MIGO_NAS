@@ -50,6 +50,7 @@ def main():
     np.random.seed(config.seed)
     torch.manual_seed(config.seed)
     torch.cuda.manual_seed_all(config.seed)
+    random.seed(config.seed)
     # torch.backends.cudnn.benchmark = True
     if config.deterministic:
         torch.backends.cudnn.benchmark = False
@@ -219,9 +220,10 @@ def main():
             path = get_MB_network(config.network_info_path, flops_constraint=i, name=flops_save_name)
             logger.info("FLOPS {}M: {}".format(str(i), str(path)))
     elif config.search_space == 'darts':
-        best_gene_constrain_4 = get_gene_with_skip_connection_constraints(distribution_optimizer.p_model.theta,
-                                                                          skip_constraint=4)
-        logger.info("Best Genotype with N constraint 4 = {}".format(best_gene_constrain_4))
+        for i in [2, 3, 4, 5, 6]:
+            best_gene_constrain = get_gene_with_skip_connection_constraints(distribution_optimizer.p_model.theta,
+                                                                            skip_constraint=i)
+            logger.info("Best Genotype with N constraint {0} = {1}".format(str(i),best_gene_constrain))
         logger.info("Generate the network config with different constraints")
         get_gene_by_prob(config.network_info_path, distribution_optimizer.p_model.theta)
     logger.info("Done")

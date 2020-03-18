@@ -1,5 +1,6 @@
 import numpy as np
 import tqdm
+import pdb
 from search_algorithm import Category_DDPNAS, Category_MDENAS, Category_SNG, \
     Category_ASNG, Category_Dynamic_ASNG, Category_Dynamic_SNG, Category_Dynamic_SNG_V3, \
     Category_DDPNAS_V3, Category_DDPNAS_V2
@@ -37,8 +38,8 @@ category = [9]*10
 # test_function = SumCategoryTestFunction(category)
 # ['quad', 'linear', 'exp', 'constant']
 # ['index_sum', 'rastrigin', 'rosenbrock ']
-test_function = EpochSumCategoryTestFunction(category, epoch_func='quad', func='rastrigin')
-optimizer_name = 'SNG'
+test_function = EpochSumCategoryTestFunction(category, epoch_func='constant', func='rastrigin')
+optimizer_name = 'ASNG'
 
 # distribution_optimizer = Category_DDPNAS.CategoricalDDPNAS(category, 3)
 distribution_optimizer = get_optimizer(optimizer_name, category)
@@ -61,6 +62,8 @@ for i in tqdm.tqdm(range(runing_times)):
         distance = test_function.l2_distance(current_best)
         record['objective'][i, j] = objective
         record['l2_distance'][i, j] = distance
+    test_function.re_new()
+    del distribution_optimizer
     distribution_optimizer = get_optimizer(optimizer_name, category)
 mean_obj = np.mean(record['objective'], axis=0)
 mean_distance = np.mean(record['l2_distance'], axis=0)

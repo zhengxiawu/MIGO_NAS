@@ -1,4 +1,5 @@
 import numpy as np
+import pdb
 # test function
 
 
@@ -25,6 +26,9 @@ class TestFunction:
 
     def l2_distance(self, sample):
         raise NotImplementedError
+
+    def re_new(self):
+        pass
 
 
 class SumCategoryTestFunction(TestFunction):
@@ -68,10 +72,17 @@ class EpochSumCategoryTestFunction(TestFunction):
             self.bias = int(self.category[0]/2)
         self.maxmize = 1 if self.func == 'index_sum' else -1
 
+    def re_new(self):
+        self.epoch_recoder = []
+        for i in range(len(self.category)):
+            self.epoch_recoder.append(np.zeros(self.category[i]))
+        self.epoch_recoder = np.array(self.epoch_recoder)
+
     def input_trans(self, input):
         return (input - self.bias) * self.scale
 
     def objective_function(self, sample):
+
         sample = self.input_trans(sample)
         epoch = []
         for i in range(sample.shape[0]):
@@ -90,13 +101,17 @@ class EpochSumCategoryTestFunction(TestFunction):
             raise NotImplementedError
         # ['index_sum', 'rastrigin', 'rosenbrock ']
         if self.func == 'index_sum':
-            result = np.sum(epoch * sample)
+            result = np.sum(sample)
         elif self.func == 'rastrigin':
             result = rastrigin_function(sample)
-            result *= np.random.choice(epoch)
+            # result *= np.random.choice(epoch)
         else:
             result = rosenbrock_function(sample)
-            result *= np.random.choice(epoch)
+
+        max_epoch = np.max(epoch)
+        min_epoch = np.min(epoch)
+        random_seed = np.random.randn() * (max_epoch - min_epoch) + 1.
+        result *= random_seed
         return result * self.maxmize
 
     def optimal_value(self):

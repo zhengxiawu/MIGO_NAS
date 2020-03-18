@@ -250,7 +250,6 @@ def get_MB_network(dir_name, flops_constraint=600, name=None):
     total_flops = 0
     total_flops += (flops_list['first_conv_flpos'] + flops_list['feature_mix_layer_flops'] +
                     flops_list['classifier_flops'] + flops_list['block_flops'][0][0])
-    pdb.set_trace()
     if 'final_expand_layer_flops' in flops_list.keys():
         total_flops += flops_list['final_expand_layer_flops']
     total_flops = total_flops
