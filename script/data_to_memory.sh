@@ -12,4 +12,12 @@ elif [ "$1" == 'cifar10' ];
 then
 mount -t tmpfs -o size=1G tmpfs /userhome/temp_data
 cp -r /userhome/data/cifar10 /userhome/temp_data/
+elif [ "$1" == 'cifar100' ];
+then
+mount -t tmpfs -o size=1G tmpfs /userhome/temp_data
+cp -r /userhome/data/cifar100 /userhome/temp_data/
+elif [ "$1" == 'fashionmnist' ];
+then
+mount -t tmpfs -o size=1G tmpfs /userhome/temp_data
+cp -r /userhome/data/fashionmnist /userhome/temp_data/
 fi
