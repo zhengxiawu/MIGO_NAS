@@ -145,10 +145,12 @@ def main():
                                                                      step=config.pruning_step,
                                                                      pruning=True, sample_with_prob=False,
                                                                      utility_function='log', utility_function_hyper=0.4,
-                                                                     momentum=True, gamma=0.9)
+                                                                     momentum=True, gamma=config.gamma)
     else:
         raise NotImplementedError
     # training loop
+    # step
+    config.w_lr_step = config.w_lr_step / 3. * config.pruning_step
 
     logger.info("start warm up training")
     for epoch in range(config.warm_up_epochs):

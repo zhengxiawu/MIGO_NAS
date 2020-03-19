@@ -61,7 +61,7 @@ def _parser(parser):
     # training parser
     parser.add_argument('--w_lr', type=float, default=0.1, help='lr for weights')
     parser.add_argument('--w_lr_min', type=float, default=0.0001, help='minimum learning rate')
-    parser.add_argument('--w_lr_step', type=int, default=40, help='lr for weights')
+    parser.add_argument('--w_lr_step', type=int, default=50, help='lr for weights')
     parser.add_argument('--w_lr_gamma', type=float, default=0.1, help='minimum lr for weights')
     parser.add_argument('--w_momentum', type=float, default=0.9, help='momentum for weights')
     parser.add_argument('--w_weight_decay', type=float, default=3e-4,
@@ -71,7 +71,7 @@ def _parser(parser):
     parser.add_argument('--print_freq', type=int, default=100, help='print frequency')
     parser.add_argument('--gpus', default='0', help='gpu device ids separated by comma. '
                                                     '`all` indicates use all gpus.')
-    parser.add_argument('--epochs', type=int, default=200, help='# of training epochs')
+    parser.add_argument('--epochs', type=int, default=1000, help='# of training epochs')
     # for one shot NAS
     parser.add_argument('--warm_up_epochs', type=int, default=0, help='# of training epochs')
     # random seed
