@@ -2,6 +2,7 @@ from model.darts_cell import *
 import utils.genotypes as gt
 import numpy as np
 from model.base_module import MyModule, MyNetwork
+from utils.genotypes import NAS_BENCH_201
 
 
 # search cnn
@@ -65,3 +66,64 @@ class SelectSearchCNN(MyNetwork):
 
         return gt.Genotype(normal=gene_normal, normal_concat=concat,
                            reduce=gene_reduce, reduce_concat=concat)
+
+
+class NASBench201CNN(nn.Module):
+
+    # def __init__(self, C, N, max_nodes, num_classes, search_space, affine=False, track_running_stats=True):
+    def __init__(self, C, N, max_nodes, num_classes, search_space):
+        super(NASBench201CNN, self).__init__()
+        self._C = C
+        self._layerN = N
+        self.max_nodes = max_nodes
+        self.stem = nn.Sequential(
+            nn.Conv2d(3, C, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(C))
+
+        layer_channels = [C] * N + [C * 2] + [C * 2] * N + [C * 4] + [C * 4] * N
+        layer_reductions = [False] * N + [True] + [False] * N + [True] + [False] * N
+
+        C_prev, num_edge, edge2index = C, None, None
+        self.cells = nn.ModuleList()
+        for index, (C_curr, reduction) in enumerate(zip(layer_channels, layer_reductions)):
+            if reduction:
+                cell = ops.ResNetBasicblock(C_prev, C_curr, 2)
+            else:
+                cell = NAS201SearchCell(max_nodes, C_prev, C_curr, 1, search_space)
+                if num_edge is None:
+                    num_edge, edge2index = cell.num_edges, cell.edge2index
+                else:
+                    assert num_edge == cell.num_edges and edge2index == cell.edge2index, 'invalid {:} vs. {:}.'.format(
+                        num_edge, cell.num_edges)
+            self.cells.append(cell)
+            C_prev = cell.out_dim
+        self._Layer = len(self.cells)
+        self.edge2index = edge2index
+        self.num_edges = num_edge
+        self.lastact = nn.Sequential(nn.BatchNorm2d(C_prev), nn.ReLU(inplace=True))
+        self.global_pooling = nn.AdaptiveAvgPool2d(1)
+        self.classifier = nn.Linear(C_prev, num_classes)
+
+    def genotype(self, theta):
+        genotypes = {}
+        for i in range(1, self.max_nodes):
+            for j in range(i):
+                node_str = '{:}<-{:}'.format(i, j)
+                weights = theta[self.edge2index[node_str]]
+                op_name = NAS_BENCH_201[np.argmax(weights)]
+                genotypes[node_str] = op_name
+        return genotypes
+
+    def forward(self, inputs, weight):
+
+        feature = self.stem(inputs)
+        for i, cell in enumerate(self.cells):
+            if isinstance(cell, ops.ResNetBasicblock):
+                feature = cell(feature)
+            else:
+                feature = cell(feature, weight)
+        out = self.lastact(feature)
+        out = self.global_pooling(out)
+        out = out.view(out.size(0), -1)
+        logits = self.classifier(out)
+        return logits

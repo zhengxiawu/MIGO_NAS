@@ -22,6 +22,9 @@ PRIMITIVES = [
     'none'
 ]
 
+NAS_BENCH_201 = ['none', 'skip_connect', 'nor_conv_1x1',
+                 'nor_conv_3x3', 'avg_pool_3x3']
+
 
 def to_dag(C_in, gene, reduction):
     """ generate discrete ops from gene """

@@ -17,7 +17,25 @@ OPS = {
     'sep_conv_7x7': lambda C, stride, affine: SepConv(C, C, 7, stride, 3, affine=affine),
     'dil_conv_3x3': lambda C, stride, affine: DilConv(C, C, 3, stride, 2, 2, affine=affine), # 5x5
     'dil_conv_5x5': lambda C, stride, affine: DilConv(C, C, 5, stride, 4, 2, affine=affine), # 9x9
-    'conv_7x1_1x7': lambda C, stride, affine: FacConv(C, C, 7, stride, 3, affine=affine)
+    'conv_7x1_1x7': lambda C, stride, affine: FacConv(C, C, 7, stride, 3, affine=affine),
+    'norm_conv_3x3': lambda C, stride, affine: ReLUConvBN(C, C, 3, stride, 1, affine=affine),
+    'norm_conv_1x1': lambda C, stride, affine: ReLUConvBN(C, C, 1, stride, 0, affine=affine),
+}
+
+OPS_V2 = {
+    'none': lambda C_in, C_out, stride, affine: Zero(stride),
+    'avg_pool_3x3': lambda C_in, C_out, stride, affine: PoolBN('avg', C_in, 3, stride, 1, affine=affine),
+    'max_pool_3x3': lambda C_in, C_out, stride, affine: PoolBN('max', C_in, 3, stride, 1, affine=affine),
+    'skip_connect': lambda C_in, C_out, stride, affine: \
+        Identity() if stride == 1 else FactorizedReduce(C_in, C_out, affine=affine),
+    'sep_conv_3x3': lambda C_in, C_out, stride, affine: SepConv(C_in, C_out, 3, stride, 1, affine=affine),
+    'sep_conv_5x5': lambda C_in, C_out, stride, affine: SepConv(C_in, C_out, 5, stride, 2, affine=affine),
+    'sep_conv_7x7': lambda C_in, C_out, stride, affine: SepConv(C_in, C_out, 7, stride, 3, affine=affine),
+    'dil_conv_3x3': lambda C_in, C_out, stride, affine: DilConv(C_in, C_out, 3, stride, 2, 2, affine=affine), # 5x5
+    'dil_conv_5x5': lambda C_in, C_out, stride, affine: DilConv(C_in, C_out, 5, stride, 4, 2, affine=affine), # 9x9
+    'conv_7x1_1x7': lambda C_in, C_out, stride, affine: FacConv(C_in, C_out, 7, stride, 3, affine=affine),
+    'norm_conv_3x3': lambda C_in, C_out, stride, affine: ReLUConvBN(C_in, C_out, 3, stride, 1, affine=affine),
+    'norm_conv_1x1': lambda C_in, C_out, stride, affine: ReLUConvBN(C_in, C_out, 1, stride, 0, affine=affine),
 }
 
 
@@ -214,13 +232,38 @@ class MixedOp(nn.Module):
 
 
 class SelectOp(nn.Module):
-    """ Mixed operation """
+    """darts Mixed operation """
 
     def __init__(self, C, stride):
         super().__init__()
         self._ops = nn.ModuleList()
         for primitive in gt.PRIMITIVES:
             op = OPS[primitive](C, stride, affine=False)
+            self._ops.append(op)
+
+    def forward(self, x, weights):
+        """
+        Args:
+            x: input
+            weights: weight for each operation
+        """
+        op = self._ops[int(weights)]
+        return op(x)
+
+
+class SelectBasicOperation(nn.Module):
+    """ define the search space according to string """
+    def __init__(self, C_in, C_out, stride, search_space='nas_bench_201'):
+        super().__init__()
+        self._ops = nn.ModuleList()
+        if search_space == 'nas_bench_201':
+            basic_primitives = gt.NAS_BENCH_201
+        elif search_space == 'darts':
+            basic_primitives = gt.PRIMITIVES
+        else:
+            raise NotImplementedError
+        for primitive in basic_primitives:
+            op = OPS_V2[primitive](C_in, C_out, stride, affine=False)
             self._ops.append(op)
 
     def forward(self, x, weights):
@@ -256,3 +299,38 @@ class BasicBlock(nn.Module):
         out += self.shortcut(x)
         out = F.relu(out)
         return out
+
+
+class ResNetBasicblock(nn.Module):
+    def __init__(self, inplanes, planes, stride, affine=True):
+        super(ResNetBasicblock, self).__init__()
+        assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)
+        self.conv_a = ReLUConvBN(inplanes, planes, 3, stride, 1)
+        self.conv_b = ReLUConvBN(planes, planes, 3, 1, 1)
+        if stride == 2:
+            self.downsample = nn.Sequential(
+                               nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
+                               nn.Conv2d(inplanes, planes, kernel_size=1, stride=1, padding=0, bias=False))
+        elif inplanes != planes:
+            self.downsample = ReLUConvBN(inplanes, planes, 1, 1, 0)
+        else:
+            self.downsample = None
+        self.in_dim = inplanes
+        self.out_dim = planes
+        self.stride = stride
+        self.num_conv = 2
+
+    def extra_repr(self):
+        string = '{name}(inC={in_dim}, outC={out_dim}, stride={stride})'.format(name=self.__class__.__name__, **self.__dict__)
+        return string
+
+    def forward(self, inputs):
+
+        basicblock = self.conv_a(inputs)
+        basicblock = self.conv_b(basicblock)
+
+        if self.downsample is not None:
+            residual = self.downsample(inputs)
+        else:
+            residual = inputs
+        return residual + basicblock

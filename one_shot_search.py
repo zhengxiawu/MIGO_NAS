@@ -6,7 +6,7 @@ import numpy as np
 from tensorboardX import SummaryWriter
 from config.config import SearchConfig
 import utils.utils as utils
-from model.darts_cnn import SelectSearchCNN
+from model.darts_cnn import SelectSearchCNN, NASBench201CNN
 from model.mb_v3_cnn import get_super_net
 from datasets import get_data
 from search_algorithm import Category_MDENAS, Category_DDPNAS, Category_SNG, Category_ASNG, \
@@ -73,6 +73,11 @@ def main():
                                 config.layers, config.n_nodes, net_crit)
         total_edges = sum(list(range(2, config.n_nodes + 2))) * 2
         num_ops = len(genotypes.PRIMITIVES)
+        model = model.to(device)
+    elif config.search_space == 'nas_bench_201':
+        model = NASBench201CNN(config.init_channels, config.layers, config.n_nodes, n_classes, config.search_space)
+        total_edges = model.num_edges
+        num_ops = len(genotypes.NAS_BENCH_201)
         model = model.to(device)
     elif config.search_space in ['proxyless', 'google', 'ofa']:
         model = get_super_net(n_classes=n_classes, base_stage_width=config.search_space,

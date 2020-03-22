@@ -57,6 +57,37 @@ class SelectCell(nn.Module):
         return s_out
 
 
+# This module is used for NAS-Bench-201, represents a small search space with a complete DAG
+class NAS201SearchCell(nn.Module):
+
+    def __init__(self, n_nodes, C_in, C_out, stride, search_sapce):
+        super(NAS201SearchCell, self).__init__()
+        self.search_space = search_sapce
+        # generate dag
+        self.edges = nn.ModuleList()
+        for i in range(1, n_nodes):
+            for j in range(i):
+                node_str = '{:}<-{:}'.format(i, j)
+                if j == 0:
+                    self.edges[node_str] = ops.SelectBasicOperation(C_in, C_out, stride, search_space=self.search_space)
+                else:
+                    self.edges[node_str] = ops.SelectBasicOperation(C_in, C_out, 1, search_space=self.search_space)
+        self.edge_keys = sorted(list(self.edges.keys()))
+        self.edge2index = {key: i for i, key in enumerate(self.edge_keys)}
+        self.num_edges = len(self.edges)
+
+    def forward(self, inputs, sample):
+        nodes = [inputs]
+        for i in range(1, self.max_nodes):
+            inter_nodes = []
+            for j in range(i):
+                node_str = '{:}<-{:}'.format(i, j)
+                weights = sample[self.edge2index[node_str]]
+                inter_nodes.append(self.edges[node_str](nodes[j], weights))
+            nodes.append(sum(inter_nodes))
+        return nodes[-1]
+
+
 class InitCell(nn.Module):
     def __init__(self, cin, cout):
         super().__init__()
