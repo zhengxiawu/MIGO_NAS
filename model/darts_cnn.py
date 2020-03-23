@@ -68,8 +68,7 @@ class SelectSearchCNN(MyNetwork):
                            reduce=gene_reduce, reduce_concat=concat)
 
 
-class NASBench201CNN(nn.Module):
-
+class NASBench201CNN(MyNetwork):
     # def __init__(self, C, N, max_nodes, num_classes, search_space, affine=False, track_running_stats=True):
     def __init__(self, C, N, max_nodes, num_classes, search_space):
         super(NASBench201CNN, self).__init__()
@@ -105,13 +104,18 @@ class NASBench201CNN(nn.Module):
         self.classifier = nn.Linear(C_prev, num_classes)
 
     def genotype(self, theta):
-        genotypes = {}
+        genotypes = ''
         for i in range(1, self.max_nodes):
+            sub_geno = '|'
             for j in range(i):
                 node_str = '{:}<-{:}'.format(i, j)
                 weights = theta[self.edge2index[node_str]]
                 op_name = NAS_BENCH_201[np.argmax(weights)]
-                genotypes[node_str] = op_name
+                sub_geno += '{0}~{1}|'.format(op_name, str(j))
+            if i == 1:
+                genotypes += sub_geno
+            else:
+                genotypes += '+' + sub_geno
         return genotypes
 
     def forward(self, inputs, weight):

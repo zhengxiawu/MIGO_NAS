@@ -75,6 +75,8 @@ def main():
         num_ops = len(genotypes.PRIMITIVES)
         model = model.to(device)
     elif config.search_space == 'nas_bench_201':
+        from nas_201_api import NASBench201API as API
+        api = API('/userhome/data/AutoML/NAS-Bench-102-v1_0-e61699.pth')
         model = NASBench201CNN(config.init_channels, config.layers, config.n_nodes, n_classes, config.search_space)
         total_edges = model.num_edges
         num_ops = len(genotypes.NAS_BENCH_201)
@@ -155,7 +157,8 @@ def main():
         raise NotImplementedError
     # training loop
     # step
-    config.w_lr_step = config.w_lr_step / 3. * config.pruning_step
+    config.w_lr_step = config.w_lr_step * (num_ops / 8.) * (config.pruning_step / 3)
+    logger.info("learning rate step is: {}".format(str(config.w_lr_step)))
 
     logger.info("start warm up training")
     for epoch in range(config.warm_up_epochs):
@@ -209,6 +212,11 @@ def main():
             best_genotype = genotype
             is_best = True
             logger.info("Current best genotype is: {}".format(genotype))
+            if config.search_space == 'nas_bench_201':
+                index = api.query_index_by_arch(best_genotype)
+                if index > 0:
+                    info = api.arch2infos_full[index].get_metrics('cifar10', 'ori-test')
+                    logger.info('Test loss on CIFAR10 is: {}'.format(info['accuracy']))
         else:
             is_best = False
         utils.save_checkpoint(model, config.path, is_best)

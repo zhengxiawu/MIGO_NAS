@@ -64,7 +64,10 @@ class NAS201SearchCell(nn.Module):
         super(NAS201SearchCell, self).__init__()
         self.search_space = search_sapce
         # generate dag
-        self.edges = nn.ModuleList()
+        self.edges = nn.ModuleDict()
+        self.in_dim = C_in
+        self.out_dim = C_out
+        self.n_nodes = n_nodes
         for i in range(1, n_nodes):
             for j in range(i):
                 node_str = '{:}<-{:}'.format(i, j)
@@ -78,7 +81,7 @@ class NAS201SearchCell(nn.Module):
 
     def forward(self, inputs, sample):
         nodes = [inputs]
-        for i in range(1, self.max_nodes):
+        for i in range(1, self.n_nodes):
             inter_nodes = []
             for j in range(i):
                 node_str = '{:}<-{:}'.format(i, j)
