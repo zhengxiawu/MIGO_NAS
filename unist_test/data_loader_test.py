@@ -4,8 +4,8 @@ import numpy as np
 import tqdm
 
 data_dict = [
-    # {'name': 'cifar10',
-    #  'data_path': '/userhome/temp_data/cifar10'},
+    {'name': 'cifar10',
+     'data_path': '/userhome/temp_data/cifar10'},
     {'name': 'cifar100',
      'data_path': '/userhome/temp_data/cifar100'},
     {'name': 'fashionmnist',
