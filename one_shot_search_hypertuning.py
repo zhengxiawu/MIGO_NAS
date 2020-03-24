@@ -29,7 +29,7 @@ def mkdir(path):
 
 
 device = torch.device("cuda")
-config_path = os.path.join('/userhome/project/Auto_NAS_V2/experiments/hyper_tunning', str(time.time()))
+config_path = os.path.join('/userhome/project/Auto_NAS_V2/experiments/hyper_tunning', 'new_' + str(time.time()))
 # tensorboard
 writer = SummaryWriter(logdir=os.path.join(config_path, "tb"))
 mkdir(config_path)
@@ -233,9 +233,21 @@ def array_main(param):
 
 if __name__ == "__main__":
 
+    # fspace = {
+    #     'init_channels': hp.choice('init_channels', [8, 10, 12, 14, 16, 18, 20]),
+    #     'layers': hp.choice('layers', [2, 3, 4, 5, 6, 7]),
+    #     'w_lr': hp.choice('w_lr', [0.0001, 0.001, 0.01, 0.1, 0.2, 0.5]),
+    #     'w_momentum': hp.choice('w_momentum', [0.5, 0.6, 0.7, 0.8, 0.9]),
+    #     'w_weight_decay': hp.choice('w_weight_decay', [0.0, 0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.003]),
+    #     'w_lr_step': hp.choice('w_lr_step', [5, 10, 15, 20, 25, 30, 35]),
+    #     'datset_split': hp.choice('datset_split', [5, 10, 15, 20]),
+    #     'warm_up_epochs': hp.choice('warm_up_epochs', [8, 10, 12, 14, 16, 18, 20]),
+    #     'pruning_step': hp.choice('pruning_step', [1, 2, 3, 4, 5, 6, 7, 8, 9]),
+    #     'gamma': hp.choice('gamma', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
+    # }
     fspace = {
-        'init_channels': hp.choice('init_channels', [8, 10, 12, 14, 16, 18, 20]),
-        'layers': hp.choice('layers', [2, 3, 4, 5, 6, 7]),
+        'init_channels': hp.choice('init_channels', [16]),
+        'layers': hp.choice('layers', [5]),
         'w_lr': hp.choice('w_lr', [0.0001, 0.001, 0.01, 0.1, 0.2, 0.5]),
         'w_momentum': hp.choice('w_momentum', [0.5, 0.6, 0.7, 0.8, 0.9]),
         'w_weight_decay': hp.choice('w_weight_decay', [0.0, 0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.003]),
@@ -252,7 +264,7 @@ if __name__ == "__main__":
     # array_main(example)
     # pdb.set_trace()
     trails = Trials()
-    best = fmin(fn=array_main, space=fspace, algo=tpe.suggest, max_evals=100, trials=trails)
+    best = fmin(fn=array_main, space=fspace, algo=tpe.suggest, max_evals=100, trials=trails, max_queue_len=4)
     logger.info("best: {}".format(str(best)))
     for trail in trails:
         logger.info("{}".format(trail))
