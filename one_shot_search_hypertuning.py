@@ -29,7 +29,7 @@ def mkdir(path):
 
 
 device = torch.device("cuda")
-config_path = os.path.join('/userhome/project/Auto_NAS_V2/experiments/hyper_tunning', 'new_' + str(time.time()))
+config_path = os.path.join('/userhome/project/Auto_NAS_V2/experiments/hyper_tunning', 'no_determin_' + str(time.time()))
 # tensorboard
 writer = SummaryWriter(logdir=os.path.join(config_path, "tb"))
 mkdir(config_path)
@@ -51,7 +51,7 @@ def main(init_channels=16, layers=5,
     w_lr_min = 0.0001
     torch.cuda.set_device(0)
     seed = 2
-    deterministic = True
+    deterministic = False
     # torch.backends.cudnn.benchmark = True
     if deterministic:
         torch.backends.cudnn.benchmark = False
@@ -219,7 +219,7 @@ def validate(valid_loader, model, epoch, cur_step, sample, net_crit):
 
 def array_main(param):
     result = []
-    for i in range(1):
+    for i in range(4):
         a = main(init_channels=param['init_channels'], layers=param['layers'],
                  w_lr=param['w_lr'], w_momentum=param['w_momentum'], w_weight_decay=param['w_weight_decay'],
                  w_lr_step=param['w_lr_step'], datset_split=param['datset_split'], warm_up_epochs=param['warm_up_epochs'],
@@ -249,11 +249,11 @@ if __name__ == "__main__":
         'init_channels': hp.choice('init_channels', [16]),
         'layers': hp.choice('layers', [5]),
         'w_lr': hp.choice('w_lr', [0.0001, 0.001, 0.01, 0.1, 0.2, 0.5]),
-        'w_momentum': hp.choice('w_momentum', [0.5, 0.6, 0.7, 0.8, 0.9]),
+        'w_momentum': hp.choice('w_momentum', [0.9]),
         'w_weight_decay': hp.choice('w_weight_decay', [0.0, 0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.003]),
         'w_lr_step': hp.choice('w_lr_step', [5, 10, 15, 20, 25, 30, 35]),
-        'datset_split': hp.choice('datset_split', [5, 10, 15, 20]),
-        'warm_up_epochs': hp.choice('warm_up_epochs', [8, 10, 12, 14, 16, 18, 20]),
+        'datset_split': hp.choice('datset_split', [10]),
+        'warm_up_epochs': hp.choice('warm_up_epochs', [0, 5, 10]),
         'pruning_step': hp.choice('pruning_step', [1, 2, 3, 4, 5, 6, 7, 8, 9]),
         'gamma': hp.choice('gamma', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
     }
