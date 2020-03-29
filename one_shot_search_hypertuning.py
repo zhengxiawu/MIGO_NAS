@@ -29,7 +29,7 @@ def mkdir(path):
 
 
 device = torch.device("cuda")
-config_path = os.path.join('/userhome/project/Auto_NAS_V2/experiments/hyper_tunning', 'no_determin_' + str(time.time()))
+config_path = os.path.join('/userhome/project/Auto_NAS_V2/experiments/hyper_tunning', 'faster_' + str(time.time()))
 # tensorboard
 writer = SummaryWriter(logdir=os.path.join(config_path, "tb"))
 mkdir(config_path)
@@ -249,12 +249,12 @@ if __name__ == "__main__":
         'init_channels': hp.choice('init_channels', [16]),
         'layers': hp.choice('layers', [5]),
         'w_lr': hp.choice('w_lr', [0.0001, 0.001, 0.01, 0.1, 0.2, 0.5]),
-        'w_momentum': hp.choice('w_momentum', [0.9]),
+        'w_momentum': hp.choice('w_momentum', [0.1, 0.3, 0.5, 0.7, 0.9]),
         'w_weight_decay': hp.choice('w_weight_decay', [0.0, 0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.003]),
-        'w_lr_step': hp.choice('w_lr_step', [5, 10, 15, 20, 25, 30, 35]),
+        'w_lr_step': hp.choice('w_lr_step', [5, 20, 25, 30]),
         'datset_split': hp.choice('datset_split', [10]),
-        'warm_up_epochs': hp.choice('warm_up_epochs', [0, 5, 10]),
-        'pruning_step': hp.choice('pruning_step', [1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        'warm_up_epochs': hp.choice('warm_up_epochs', [0, 1, 2, 3, 4, 5]),
+        'pruning_step': hp.choice('pruning_step', [2, 3, 4]),
         'gamma': hp.choice('gamma', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
     }
     # test function
