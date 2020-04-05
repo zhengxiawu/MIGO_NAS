@@ -22,7 +22,7 @@ def get_data(dataset, data_path, cutout_length, validation, image_size=None):
         n_classes = 10
     elif dataset == 'cifar100':
         dset_cls = dset.CIFAR100
-        n_classes = 10
+        n_classes = 100
     elif dataset == 'mnist':
         dset_cls = dset.MNIST
         n_classes = 10

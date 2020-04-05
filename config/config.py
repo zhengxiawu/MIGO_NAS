@@ -100,13 +100,25 @@ class SearchConfig(BaseConfig):
         args = parser.parse_args()
         super().__init__(**vars(args))
         time_str = time.asctime(time.localtime()).replace(' ', '_')
+        #'w_lr': '0.2', 'w_momentum': '0.8', 'w_weight_decay': '0.003', 'w_lr_step': '30', 'datset_split': '20',
+        # 'warm_up_epochs': '14', 'pruning_step': '5', 'gamma': '0.7'
         name_componment = [
-                           'width_multi_' + str(self.width_mult),
-                           'epochs_' + str(self.epochs),
+                           'seed_' + str(self.seed),
+                           'w_lr' + str(self.w_lr),
+                           'w_momentum_' + str(self.w_momentum),
+                           'w_weight_decay' + str(self.w_weight_decay),
+                           'w_lr_step_' + str(self.w_lr_step),
                            'data_split_' + str(self.datset_split),
                            'warm_up_epochs_' + str(self.warm_up_epochs),
-                           'lr_' + str(self.w_lr),
                            ]
+
+        # name_componment = [
+        #                    'width_multi_' + str(self.width_mult),
+        #                    'epochs_' + str(self.epochs),
+        #                    'data_split_' + str(self.datset_split),
+        #                    'warm_up_epochs_' + str(self.warm_up_epochs),
+        #                    'lr_' + str(self.w_lr),
+        #                    ]
         if 'dynamic' in self.name or 'DDPNAS' in self.name:
             name_componment += ['pruning_step_' + str(self.pruning_step),
                                 'gamma_' + str(self.gamma)]
@@ -114,6 +126,8 @@ class SearchConfig(BaseConfig):
             name_componment += ['init_channels' + str(self.init_channels),
                                 'layers' + str(self.layers),
                                 'n_nodes' + str(self.n_nodes)]
+        else:
+            name_componment += ['width_multi_' + str(self.width_mult)]
         name_str = ''
         for i in name_componment:
             name_str += i + '_'
