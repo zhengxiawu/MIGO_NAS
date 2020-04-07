@@ -21,8 +21,8 @@ class CategoricalDDPNASV3:
         self.learning_rate = 0.2
         self.training_finish = False
         self.training_epoch = self.get_training_epoch()
-        self.non_param_index = [0, 1, 2, 3]
-        self.param_index = [4, 5, 6, 7]
+        self.non_param_index = [0, 1, 2, 7]
+        self.param_index = [3, 4, 5, 6]
         self.non_param_index_num = len(self.non_param_index)
         self.pruned_index_num = len(self.param_index)
         self.non_param_index_count = [0] * self.p_model.d
