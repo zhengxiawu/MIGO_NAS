@@ -5,6 +5,7 @@ from utils import genotypes
 import os
 import copy
 import json
+import glob
 import pdb
 
 
@@ -280,13 +281,39 @@ def get_MB_network(dir_name, flops_constraint=600, name=None):
     return path
 
 
+def get_constraint():
+    network_info_path_list = glob.glob(
+        '/userhome/project/Auto_NAS_V2/experiments/dynamic_SNG_V3/darts/*/seed*/network_info')
+    # print(network_info_path_list)
+    network_info_path_list = sorted(network_info_path_list)
+    for network_info_path in network_info_path_list:
+        theta = np.load(os.path.join(network_info_path, 'probability.npy'))
+        # print(theta)
+        print(network_info_path)
+        for i in [2, 3, 4]:
+            print(i)
+            a = get_gene_with_skip_connection_constraints(theta, skip_constraint=i, reduction=False)
+            print(a)
+
+
 if __name__ == '__main__':
+    pass
+    # get_constraint()
     # network_info_path = '/userhome/project/Auto_NAS_V2/experiments/DDPNAS_V2/darts/cifar10/width_multi_0.0_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.1_init_channels16_layers8_n_nodes4_Tue_Feb_25_09:17:17_2020/network_info'
-    network_info_path = '/userhome/code/'
-    theta = np.load(os.path.join(network_info_path, 'probability.npy'))
-    print(theta)
+    # network_info_path = '/userhome/code/'
+    # network_info_path_list = glob.glob('/userhome/project/Auto_NAS_V2/experiments/dynamic_SNG_V3/darts/*/seed*/network_info')
+    # # print(network_info_path_list)
+    # network_info_path_list = sorted(network_info_path_list)
+    # for network_info_path in network_info_path_list:
+    #     theta = np.load(os.path.join(network_info_path, 'probability.npy'))
+    #     # print(theta)
+    #     print(network_info_path)
+    #     for i in [2, 3, 4]:
+    #         print(i)
+    #         a = get_gene_with_skip_connection_constraints(theta, skip_constraint=i, reduction=False)
+    #         print(a)
     # get_gene_by_prob(network_info_path, theta)
-    get_network(theta, reduce_constrain=False)
+    # get_network(theta, reduce_constrain=False)
     # for i in [400, 500, 600]:
     #     a = get_MB_network('/userhome/project/Auto_NAS_V2/experiment/dynamic_SNG_V3/'
     #                        'ofa__epochs_200_data_split_10_warm_up_epochs_0_pruning_step_3_Wed_Jan_22_11:52:11_2020/'
