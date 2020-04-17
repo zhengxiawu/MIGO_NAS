@@ -1,9 +1,11 @@
 from bayes_opt import BayesianOptimization
+from bayes_opt import UtilityFunction
 import numpy as np
 from test.search_algorithm_test_function import EpochSumCategoryTestFunction
 import tqdm
 import time
 import os
+import pdb
 
 
 def trans(sample, func, M):
@@ -21,8 +23,8 @@ def trans(sample, func, M):
     return (sample - bias) * scale
 
 
-M = 10
-N = 10
+M = 20
+N = 20
 category = [M]*N
 # test_function = SumCategoryTestFunction(category)
 # ['quad', 'linear', 'exp', 'constant']
@@ -53,31 +55,49 @@ def get_function_and_bound(N, M):
     return def_str, bound
 
 
-if __name__ == '__main__':
+def run(func, N, M):
+    # M = 20
+    # N = 20
+    category = [M] * N
+    # test_function = SumCategoryTestFunction(category)
+    # ['quad', 'linear', 'exp', 'constant']
+    # ['index_sum', 'rastrigin', 'rosenbrock ']
+    epoc_function = 'linear'
+    # func = 'rastrigin'
+    test_function = EpochSumCategoryTestFunction(category, epoch_func=epoc_function, func=func)
     func_str, bound = get_function_and_bound(N, M)
     exec(func_str)
+    # pdb.set_trace()
     test_function.re_new()
-    runing_times = 500
-    runing_epochs = 200
+    runing_times = 10
+    runing_epochs = 50
     save_dir = '/userhome/project/Auto_NAS_V2/experiments/toy_example/'
     file_name = '{}_{}_{}_{}_{}_{}.npz'.format('bayesian_op', str(N), str(M), str(runing_epochs),
                                                epoc_function, func)
     file_name = os.path.join(save_dir, file_name)
     l2_distance = np.zeros([runing_times, runing_epochs]) - 1
-    running_time = np.zeros(runing_times)
+    running_interval = np.zeros([runing_times, runing_epochs])
     for run_ in tqdm.tqdm(range(runing_times)):
-        start_time = time.time()
         optimizer = BayesianOptimization(
-            f=f,
+            f=None,
             pbounds=bound,
             verbose=2,
             random_state=1,
         )
-        optimizer.maximize(
-            init_points=1,
-            n_iter=runing_epochs,
-            alpha=1e-3)
-        end_time = time.time()
+        # using the package
+        # optimizer.maximize(
+        #     init_points=1,
+        #     n_iter=runing_epochs,
+        #     alpha=1e-3)
+        utility = UtilityFunction(kind="ucb", kappa=2.5, xi=0.0)
+        for _ in range(runing_epochs):
+            start_time = time.time()
+            next_point = optimizer.suggest(utility)
+            target = f(**next_point)
+            optimizer.register(params=next_point, target=target)
+            end_time = time.time()
+            print(end_time - start_time)
+            running_interval[run_, _] = end_time - start_time
         best = -np.inf
         best_sample = np.zeros(N)
         for i, res in enumerate(optimizer.res):
@@ -89,6 +109,13 @@ if __name__ == '__main__':
                 best_sample = sample
             distance = test_function.l2_distance(best_sample)
             l2_distance[run_, i] = distance
-        runing_times[run_] = end_time - start_time
-    np.savez(file_name, l2_distance, runing_times)
+    np.savez(file_name, l2_distance, running_interval)
 
+
+if __name__ == '__main__':
+    for func in ['index_sum', 'rosenbrock ']:
+        for (N, M) in [(10, 10), (20, 20)]:
+            print(func + str(N) + str(M))
+            func_str, bound = get_function_and_bound(N, M)
+            exec(func_str)
+            run(func, N, M)
