@@ -69,7 +69,7 @@ def run(func, N, M):
     exec(func_str)
     # pdb.set_trace()
     test_function.re_new()
-    runing_times = 10
+    runing_times = 20
     runing_epochs = 50
     save_dir = '/userhome/project/Auto_NAS_V2/experiments/toy_example/'
     file_name = '{}_{}_{}_{}_{}_{}.npz'.format('bayesian_op', str(N), str(M), str(runing_epochs),
@@ -91,6 +91,7 @@ def run(func, N, M):
         #     alpha=1e-3)
         utility = UtilityFunction(kind="ucb", kappa=2.5, xi=0.0)
         for _ in range(runing_epochs):
+            print('epoch: ' + str(_))
             start_time = time.time()
             next_point = optimizer.suggest(utility)
             target = f(**next_point)
@@ -113,7 +114,7 @@ def run(func, N, M):
 
 
 if __name__ == '__main__':
-    for func in ['index_sum', 'rosenbrock ']:
+    for func in ['index_sum', 'rastrigin', 'rosenbrock']:
         for (N, M) in [(10, 10), (20, 20)]:
             print(func + str(N) + str(M))
             func_str, bound = get_function_and_bound(N, M)

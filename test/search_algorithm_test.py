@@ -28,10 +28,10 @@ def get_optimizer(name, category, step=4, gamma=0.9):
         return Category_Dynamic_SNG.Dynamic_SNG(categories=category, step=10,
                                                 pruning=False, sample_with_prob=False)
     elif name == 'dynamic_SNG_V3':
-        return Category_Dynamic_SNG_V3.Dynamic_SNG(categories=category, step=4,
+        return Category_Dynamic_SNG_V3.Dynamic_SNG(categories=category, step=step,
                                                    pruning=True, sample_with_prob=False,
                                                    utility_function='log', utility_function_hyper=0.4,
-                                                   momentum=True, gamma=0.9)
+                                                   momentum=True, gamma=gamma)
     else:
         raise NotImplementedError
 
@@ -46,7 +46,7 @@ def run(M=10, N=10, func='rastrigin',optimizer_name='SNG', runing_times=500, run
 
     # distribution_optimizer = Category_DDPNAS.CategoricalDDPNAS(category, 3)
     distribution_optimizer = get_optimizer(optimizer_name, category, step=step, gamma=gamma)
-    save_dir = '/userhome/project/Auto_NAS_V2/experiments/toy_example/'
+    save_dir = '/userhome/project/Auto_NAS_V2/experiments/toy_example/hyper_parameter/'
     if optimizer_name == 'dynamic_SNG_V3':
         file_name = '{}_{}_{}_{}_{}_{}_{}_{}.npz'.format(optimizer_name, str(N), str(M), str(runing_epochs),
                                                    epoc_function, func, str(step), str(gamma))
@@ -58,10 +58,14 @@ def run(M=10, N=10, func='rastrigin',optimizer_name='SNG', runing_times=500, run
         'objective': np.zeros([runing_times, runing_epochs]) - 1,
         'l2_distance': np.zeros([runing_times, runing_epochs]) - 1,
     }
+    last_l2_distance = np.zeros([runing_times])
     running_time_interval = np.zeros([runing_times, runing_epochs])
+    distance = 100
     for i in tqdm.tqdm(range(runing_times)):
         for j in range(runing_epochs):
             start_time = time.time()
+            if hasattr(distribution_optimizer, 'training_finish') or j == (runing_epochs -1):
+                last_l2_distance[i] = distance
             if hasattr(distribution_optimizer, 'training_finish'):
                 if distribution_optimizer.training_finish:
                     break
@@ -84,10 +88,15 @@ def run(M=10, N=10, func='rastrigin',optimizer_name='SNG', runing_times=500, run
 
 
 if __name__ == '__main__':
-    for func in ['index_sum', 'rastrigin', 'rosenbrock']:
-        for M, N in [(10, 10), (20, 20)]:
-            for optimizer_name in ['SNG', 'ASNG', 'dynamic_SNG', 'dynamic_ASNG', 'dynamic_SNG_V3']:
-                print(func + str([N, M]) + optimizer_name)
-                run(M=M, N=N, func=func, optimizer_name=optimizer_name, runing_times=1000, runing_epochs=200, step=4,
-                    gamma=0.9)
+    for func in ['rastrigin']:
+        for step in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
+            for gamma in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+                run(M=10, N=10, func=func, optimizer_name='dynamic_SNG_V3', runing_times=500, runing_epochs=1000,
+                    step=step, gamma=gamma)
+    # for func in ['index_sum', 'rastrigin', 'rosenbrock']:
+    #     for M, N in [(10, 10), (20, 20)]:
+    #         for optimizer_name in ['SNG', 'ASNG', 'dynamic_SNG', 'dynamic_ASNG', 'dynamic_SNG_V3']:
+    #             print(func + str([N, M]) + optimizer_name)
+    #             run(M=M, N=N, func=func, optimizer_name=optimizer_name, runing_times=1000, runing_epochs=200, step=4,
+    #                 gamma=0.9)
                 # run(M=10, N=10, func='rastrigin', optimizer_name='SNG', runing_times=500, runing_epochs=200, step=4, gamma=0.9)
